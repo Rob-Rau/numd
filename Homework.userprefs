@@ -1,0 +1,17 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Homework1/main.d">
+    <Files>
+      <File FileName="Homework5/main.d" Line="1" Column="1" />
+      <File FileName="MDOL/ParticleSwarmOptimizer.d" Line="1" Column="1" />
+      <File FileName="MDOL/ArrayOps.d" Line="1" Column="1" />
+      <File FileName="MDOL/BfgsNewton.d" Line="90" Column="69" />
+      <File FileName="MDOL/BracketAndZoom.d" Line="1" Column="1" />
+      <File FileName="Homework1/main.d" Line="87" Column="12" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

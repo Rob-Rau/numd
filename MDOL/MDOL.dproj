@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}</ProjectGuid>
+    <UseDefaultCompiler>true</UseDefaultCompiler>
+    <PreferOneStepBuild>true</PreferOneStepBuild>
+    <Compiler>DMD2</Compiler>
+    <IncrementalLinking>true</IncrementalLinking>
+    <Includes>
+      <Includes>
+        <Path>.</Path>
+        <Path>/Users/rrau/Desktop/Downloads/scid-master/import</Path>
+      </Includes>
+    </Includes>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug</OutputPath>
+    <ObjectsDirectory>obj/Debug</ObjectsDirectory>
+    <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <UnittestMode>false</UnittestMode>
+    <OutputName>libMDOL</OutputName>
+    <Target>StaticLibrary</Target>
+    <Externalconsole>true</Externalconsole>
+    <DebugLevel>0</DebugLevel>
+    <ExtraLinkerArguments>/usr/local/lib/libscid.a /usr/lib/libblas.dylib</ExtraLinkerArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <ObjectsDirectory>obj/Release</ObjectsDirectory>
+    <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <UnittestMode>false</UnittestMode>
+    <OutputName>libMDOL</OutputName>
+    <Target>StaticLibrary</Target>
+    <Externalconsole>true</Externalconsole>
+    <DebugLevel>0</DebugLevel>
+    <ExtraLinkerArguments>/usr/local/lib/libscid.a /usr/lib/libblas.dylib</ExtraLinkerArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Unittest|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Unittest</OutputPath>
+    <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
+    <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <UnittestMode>true</UnittestMode>
+    <OutputName>libMDOL</OutputName>
+    <Target>Executable</Target>
+    <Externalconsole>true</Externalconsole>
+    <DebugLevel>0</DebugLevel>
+    <ExtraLinkerArguments>/usr/local/lib/libscid.a /usr/lib/libblas.dylib</ExtraLinkerArguments>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Optimizer.d" />
+    <Compile Include="GoldenSearch.d" />
+    <Compile Include="ObjectiveFunction.d" />
+    <Compile Include="ArrayOps.d" />
+    <Compile Include="BracketAndZoom.d" />
+    <Compile Include="NewtonRoot.d" />
+    <Compile Include="RootFinder.d" />
+    <Compile Include="Gradient.d" />
+    <Compile Include="Derivative.d" />
+    <Compile Include="ComplexStep.d" />
+    <Compile Include="SecantRoot.d" />
+    <Compile Include="FiniteDifference.d" />
+    <Compile Include="SteepestDescent.d" />
+    <Compile Include="ConjugateGradient.d" />
+    <Compile Include="BfgsNewton.d" />
+    <Compile Include="MatrixOps.d" />
+    <Compile Include="InteriorPenalty.d" />
+    <Compile Include="Complex.d" />
+    <Compile Include="SQP.d" />
+    <Compile Include="ParticleSwarmOptimizer.d" />
+  </ItemGroup>
+</Project>
