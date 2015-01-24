@@ -1,0 +1,38 @@
+
+Numd is meant to be a numerical methods library for the D Programming language.
+It currently only contains several optimization algorithms and a few differentiation 
+methods, but I will be adding more as I go along.
+
+I started this project for a class I took during my undergrad. The class itself was
+focused on optimization methods, which I implemented in D, but as I went I was displeased
+with D's mathematics and numerical method library support (sorry scid). I wanted a more 
+object oriented approach so I decided to write my own, based off what I had done for class.
+
+Things planned at this point:
+	More differentiation (2nd order, 3rd order, cental, left, right, ...)
+	ODE solvers (Euler, RK, Adams, ...)
+	PDE solvers (Lax-Friedrichs, Lax-Wendoff, Upwind, ...)
+	Interpolators (some of these will support various ODE and PDE methods)
+	Linear algebra (from basic matrix ops to more advanced things, eigensystems and whatnot)
+	Plotting (current lame implementation is based off plplot, want to roll my own)
+
+TODO:
+	1) Reorganize library file structure.
+		- Rename MDOL to Optimization
+		- Rename Homeworks to Demos and place them more appropriatly.
+	2) Make it easy to build and use.
+		- Fix absolute path dependancies
+		- Set up Cmake or some other build system
+	3) Write some unit regression tests
+		- This is in preperation for TODO 5
+	4) Write basic matrix library
+		- Basic matrix object and ops (addition, multiplication, inverse)
+	5) Clean up optimization library to use the new matrix library.m 
+		- Replace blas matrix function with new shiny objects.
+	6) Start implementing the above list in no particular order.
+		- With the rest in place this shouldn't be to hard....lol
+
+Dependencies:
+
+	1) plplot
+	2) scid

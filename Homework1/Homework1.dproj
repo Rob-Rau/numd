@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{23814DCC-CAB8-4A3A-BEC9-37A619AD4CBB}</ProjectGuid>
     <UseDefaultCompiler>true</UseDefaultCompiler>
@@ -19,7 +19,7 @@
     <Includes>
       <Includes>
         <Path>/usr/local/include/d/plplot</Path>
-        <Path>/Users/rrau/AE588Homework</Path>
+        <Path>..</Path>
         <Path>/Users/rrau/Desktop/Downloads/scid-master/import</Path>
       </Includes>
     </Includes>
