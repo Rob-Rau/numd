@@ -3,35 +3,35 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "MDOL", "MDOL\MDOL.visualdproj", "{925CE5E3-4A10-44FA-A7E6-F239279E0414}"
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Optimization", "Optimization\Optimization.visualdproj", "{925CE5E3-4A10-44FA-A7E6-F239279E0414}"
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Plotting", "Plotting\Plotting.visualdproj", "{745BED92-07E6-4A2D-B1A5-14904A179154}"
 EndProject
-Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Homework1", "Homework1\Homework1.visualdproj", "{69AE6D40-1916-4388-8723-556F81C7EA53}"
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "LineSearch", "Demos\Optimization\LineSearch\LineSearch.visualdproj", "{69AE6D40-1916-4388-8723-556F81C7EA53}"
 	ProjectSection(ProjectDependencies) = postProject
 		{745BED92-07E6-4A2D-B1A5-14904A179154} = {745BED92-07E6-4A2D-B1A5-14904A179154}
 		{925CE5E3-4A10-44FA-A7E6-F239279E0414} = {925CE5E3-4A10-44FA-A7E6-F239279E0414}
 	EndProjectSection
 EndProject
-Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Homework2", "Homework2\Homework2.visualdproj", "{7FE1CF9F-FF87-4291-8F09-D96284FC6FB8}"
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Derivatives", "Demos\Optimization\Derivatives\Derivatives.visualdproj", "{7FE1CF9F-FF87-4291-8F09-D96284FC6FB8}"
 	ProjectSection(ProjectDependencies) = postProject
 		{745BED92-07E6-4A2D-B1A5-14904A179154} = {745BED92-07E6-4A2D-B1A5-14904A179154}
 		{925CE5E3-4A10-44FA-A7E6-F239279E0414} = {925CE5E3-4A10-44FA-A7E6-F239279E0414}
 	EndProjectSection
 EndProject
-Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Homework3", "Homework3\Homework3.visualdproj", "{D17C6DAE-2F37-4648-AEEC-1EAB9D196458}"
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "UnconstrainedOpt", "Demos\Optimization\UnconstrainedOpt\UnconstrainedOpt.visualdproj", "{D17C6DAE-2F37-4648-AEEC-1EAB9D196458}"
 	ProjectSection(ProjectDependencies) = postProject
 		{745BED92-07E6-4A2D-B1A5-14904A179154} = {745BED92-07E6-4A2D-B1A5-14904A179154}
 		{925CE5E3-4A10-44FA-A7E6-F239279E0414} = {925CE5E3-4A10-44FA-A7E6-F239279E0414}
 	EndProjectSection
 EndProject
-Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Homework4", "Homework4\Homework4.visualdproj", "{05F82C73-E2F2-453F-9D4F-10EE25104409}"
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "ConstrainedOpt", "Demos\Optimization\ConstrainedOpt\ConstrainedOpt.visualdproj", "{05F82C73-E2F2-453F-9D4F-10EE25104409}"
 	ProjectSection(ProjectDependencies) = postProject
 		{745BED92-07E6-4A2D-B1A5-14904A179154} = {745BED92-07E6-4A2D-B1A5-14904A179154}
 		{925CE5E3-4A10-44FA-A7E6-F239279E0414} = {925CE5E3-4A10-44FA-A7E6-F239279E0414}
 	EndProjectSection
 EndProject
-Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "Homework5", "Homework5\Homework5.visualdproj", "{BE883AF6-88D3-4B1C-8B50-5243E4BED44F}"
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "GradientFree", "Demos\Optimization\GradientFree\GradientFree.visualdproj", "{BE883AF6-88D3-4B1C-8B50-5243E4BED44F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{745BED92-07E6-4A2D-B1A5-14904A179154} = {745BED92-07E6-4A2D-B1A5-14904A179154}
 		{925CE5E3-4A10-44FA-A7E6-F239279E0414} = {925CE5E3-4A10-44FA-A7E6-F239279E0414}

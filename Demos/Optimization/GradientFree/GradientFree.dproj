@@ -3,13 +3,19 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0}</ProjectGuid>
+    <ProjectGuid>{75F565EA-2442-4EA7-8990-E309A61CB7F1}</ProjectGuid>
     <UseDefaultCompiler>true</UseDefaultCompiler>
     <PreferOneStepBuild>true</PreferOneStepBuild>
     <Compiler>DMD2</Compiler>
     <IncrementalLinking>true</IncrementalLinking>
+    <DependentProjectIds>
+      <DependentProjectIds>
+        <String>{5B91B4C9-56B4-4E3A-8434-C3CFABED213D}</String>
+        <String>{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}</String>
+      </DependentProjectIds>
+    </DependentProjectIds>
     <Includes>
       <Includes>
         <Path>/usr/local/include/d/plplot</Path>
@@ -17,12 +23,6 @@
         <Path>/Users/rrau/Desktop/Downloads/scid-master/import</Path>
       </Includes>
     </Includes>
-    <DependentProjectIds>
-      <DependentProjectIds>
-        <String>{5B91B4C9-56B4-4E3A-8434-C3CFABED213D}</String>
-        <String>{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}</String>
-      </DependentProjectIds>
-    </DependentProjectIds>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,22 +30,22 @@
     <ObjectsDirectory>obj/Debug</ObjectsDirectory>
     <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
     <UnittestMode>false</UnittestMode>
-    <OutputName>Homework3</OutputName>
+    <OutputName>Homework5</OutputName>
     <Target>Executable</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib /usr/lib/liblapack.dylib</ExtraLinkerArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
     <ObjectsDirectory>obj/Release</ObjectsDirectory>
     <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
     <UnittestMode>false</UnittestMode>
-    <OutputName>Homework3</OutputName>
+    <OutputName>Homework5</OutputName>
     <Target>Executable</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib /usr/lib/liblapack.dylib</ExtraLinkerArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Unittest|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -53,11 +53,11 @@
     <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
     <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
     <UnittestMode>true</UnittestMode>
-    <OutputName>Homework3</OutputName>
+    <OutputName>Homework5</OutputName>
     <Target>Executable</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib /usr/lib/liblapack.dylib</ExtraLinkerArguments>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="main.d" />
