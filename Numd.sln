@@ -1,19 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Homework1", "Homework1\Homework1.dproj", "{23814DCC-CAB8-4A3A-BEC9-37A619AD4CBB}"
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "OptimizationDemo1", "Demos\Optimization\Demo1\OptimizationDemo1.dproj", "{23814DCC-CAB8-4A3A-BEC9-37A619AD4CBB}"
 EndProject
 Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Plotting", "Plotting\Plotting.dproj", "{5B91B4C9-56B4-4E3A-8434-C3CFABED213D}"
 EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "MDOL", "MDOL\MDOL.dproj", "{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}"
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Optimization", "Optimization\Optimization.dproj", "{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}"
 EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Homework2", "Homework2\Homework2.dproj", "{198C9AF3-2595-4747-9138-200D38E50698}"
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "OptimizationDemo2", "Demos\Optimization\Demo2\OptimizationDemo2.dproj", "{198C9AF3-2595-4747-9138-200D38E50698}"
 EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Homework3", "Homework3\Homework3.dproj", "{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0}"
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "OptimizationDemo3", "Demos\Optimization\Demo3\OptimizationDemo3.dproj", "{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0}"
 EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Homework4", "Homework4\Homework4.dproj", "{6284E55E-4730-4265-A416-2068F59950B8}"
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "OptimizationDemo4", "Demos\Optimization\Demo4\OptimizationDemo4.dproj", "{6284E55E-4730-4265-A416-2068F59950B8}"
 EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Homework5", "Homework5\Homework5.dproj", "{75F565EA-2442-4EA7-8990-E309A61CB7F1}"
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "OptimizationDemo5", "Demos\Optimization\Demo5\OptimizationDemo5.dproj", "{75F565EA-2442-4EA7-8990-E309A61CB7F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -66,6 +66,6 @@ Global
 		{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0}.Unittest|Any CPU.Build.0 = Unittest|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = Homework2\Homework2.dproj
+		StartupItem = Demos\Optimization\Demo1\Homework1.dproj
 	EndGlobalSection
 EndGlobal
