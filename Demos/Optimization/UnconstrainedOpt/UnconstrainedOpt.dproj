@@ -13,7 +13,7 @@
     <Includes>
       <Includes>
         <Path>/usr/local/include/d/plplot</Path>
-        <Path>/Users/rrau/AE588Homework</Path>
+        <Path>..</Path>
         <Path>/Users/rrau/Desktop/Downloads/scid-master/import</Path>
       </Includes>
     </Includes>

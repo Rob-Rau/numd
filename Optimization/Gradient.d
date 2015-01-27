@@ -1,4 +1,4 @@
-module MDOL.Gradient;
+module Optimization.Gradient;
 
 interface IGradient
 {

@@ -1,10 +1,10 @@
-module MDOL.Optimizer;
+module Optimization.Optimizer;
 
 import std.complex;
 import std.math;
 import std.stdio;
 import core.time;
-import MDOL.ObjectiveFunction;
+import Optimization.ObjectiveFunction;
 
 struct Result
 {

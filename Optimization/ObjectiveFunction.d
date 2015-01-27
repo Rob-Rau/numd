@@ -1,13 +1,13 @@
-module MDOL.ObjectiveFunction;
+module Optimization.ObjectiveFunction;
 
 import std.complex;
 import std.math;
 import std.stdio;
 
-import MDOL.Gradient;
-import MDOL.Derivative;
-import MDOL.ComplexStep;
-import MDOL.FiniteDifference;
+import Optimization.Gradient;
+import Optimization.Derivative;
+import Optimization.ComplexStep;
+import Optimization.FiniteDifference;
 
 abstract class ObjectiveFunction : IGradient
 {
@@ -86,7 +86,7 @@ abstract class ObjectiveFunction : IGradient
 	@property DerivativeType(string derType) { mDerivativeType = derType; }
 	@property DerivativeType() { return mDerivativeType; }
 
-	private string mDerivativeType = "MDOL.ComplexStep.ComplexStep";
+	private string mDerivativeType = "Optimization.ComplexStep.ComplexStep";
 	private double h = 1.0e-10;
 	private int mConstraints = 0;
 }

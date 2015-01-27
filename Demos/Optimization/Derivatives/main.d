@@ -14,13 +14,13 @@ import Plotting.FigPlot;
 import Plotting.Line;
 import Plotting.Color;
 
-import MDOL.Optimizer;
-import MDOL.GoldenSearch;
-import MDOL.BracketAndZoom;
-import MDOL.ObjectiveFunction;
-import MDOL.SecantRoot;
-import MDOL.NewtonRoot;
-import MDOL.Derivative;
+import Optimization.Optimizer;
+import Optimization.GoldenSearch;
+import Optimization.BracketAndZoom;
+import Optimization.ObjectiveFunction;
+import Optimization.SecantRoot;
+import Optimization.NewtonRoot;
+import Optimization.Derivative;
 
 double PlotDerivativeError();
 

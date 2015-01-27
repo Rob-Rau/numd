@@ -1,10 +1,10 @@
-﻿module MDOL.BfgsNewton;
+﻿module Optimization.BfgsNewton;
 
-import MDOL.ArrayOps;
-import MDOL.BracketAndZoom;
-import MDOL.MatrixOps;
-import MDOL.ObjectiveFunction;
-import MDOL.Optimizer;
+import Optimization.ArrayOps;
+import Optimization.BracketAndZoom;
+import Optimization.MatrixOps;
+import Optimization.ObjectiveFunction;
+import Optimization.Optimizer;
 
 import core.thread;
 

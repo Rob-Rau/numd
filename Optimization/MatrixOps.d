@@ -1,4 +1,4 @@
-﻿module MDOL.MatrixOps;
+﻿module Optimization.MatrixOps;
 
 import std.stdio;
 

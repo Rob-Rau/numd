@@ -1,10 +1,10 @@
-﻿module MDOL.ParticleSwarmOptimizer;
+﻿module Optimization.ParticleSwarmOptimizer;
 
-import MDOL.ArrayOps;
-import MDOL.Complex;
-import MDOL.Optimizer;
-import MDOL.ObjectiveFunction;
-import MDOL.BracketAndZoom;
+import Optimization.ArrayOps;
+import Optimization.Complex;
+import Optimization.Optimizer;
+import Optimization.ObjectiveFunction;
+import Optimization.BracketAndZoom;
 
 import core.thread;
 

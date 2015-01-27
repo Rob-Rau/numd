@@ -15,13 +15,13 @@ import Plotting.FigPlot;
 import Plotting.Line;
 import Plotting.Color;
 
-import MDOL.BfgsNewton;
-import MDOL.Complex;
-import MDOL.NewtonRoot;
-import MDOL.ObjectiveFunction;
-import MDOL.Optimizer;
-import MDOL.ParticleSwarmOptimizer;
-import MDOL.SecantRoot;
+import Optimization.BfgsNewton;
+import Optimization.Complex;
+import Optimization.NewtonRoot;
+import Optimization.ObjectiveFunction;
+import Optimization.Optimizer;
+import Optimization.ParticleSwarmOptimizer;
+import Optimization.SecantRoot;
 
 import scid.bindings.blas.dblas;
 import scid.matrix;

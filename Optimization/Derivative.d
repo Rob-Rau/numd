@@ -1,8 +1,8 @@
-module MDOL.Derivative;
+module Optimization.Derivative;
 
 import std.complex;
 
-import MDOL.ObjectiveFunction;
+import Optimization.ObjectiveFunction;
 
 alias Complex!double delegate(Complex!double[] input) DerivativeEquation;
 

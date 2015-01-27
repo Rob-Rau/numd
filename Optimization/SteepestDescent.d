@@ -1,9 +1,9 @@
-﻿module MDOL.SteepestDescent;
+﻿module Optimization.SteepestDescent;
 
-import MDOL.ArrayOps;
-import MDOL.Optimizer;
-import MDOL.ObjectiveFunction;
-import MDOL.BracketAndZoom;
+import Optimization.ArrayOps;
+import Optimization.Optimizer;
+import Optimization.ObjectiveFunction;
+import Optimization.BracketAndZoom;
 
 import core.thread;
 

@@ -1,12 +1,12 @@
-﻿module MDOL.InteriorPenalty;
+﻿module Optimization.InteriorPenalty;
 
-import MDOL.ArrayOps;
-import MDOL.BfgsNewton;
-import MDOL.BracketAndZoom;
-import MDOL.Complex;
-import MDOL.MatrixOps;
-import MDOL.ObjectiveFunction;
-import MDOL.Optimizer;
+import Optimization.ArrayOps;
+import Optimization.BfgsNewton;
+import Optimization.BracketAndZoom;
+import Optimization.Complex;
+import Optimization.MatrixOps;
+import Optimization.ObjectiveFunction;
+import Optimization.Optimizer;
 
 import core.thread;
 

@@ -1,8 +1,8 @@
-module MDOL.GoldenSearch;
+module Optimization.GoldenSearch;
 
-import MDOL.Optimizer;
-import MDOL.ArrayOps;
-import MDOL.ObjectiveFunction;
+import Optimization.Optimizer;
+import Optimization.ArrayOps;
+import Optimization.ObjectiveFunction;
 
 import core.thread;
 import std.array;

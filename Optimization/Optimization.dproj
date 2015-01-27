@@ -13,7 +13,7 @@
     <Includes>
       <Includes>
         <Path>.</Path>
-        <Path>/Users/rrau/Desktop/Downloads/scid-master/import</Path>
+        <Path>${Scid}</Path>
       </Includes>
     </Includes>
   </PropertyGroup>

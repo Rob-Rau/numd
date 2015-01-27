@@ -1,4 +1,4 @@
-﻿module MDOL.Complex;
+﻿module Optimization.Complex;
 
 import std.complex;
 import std.math;

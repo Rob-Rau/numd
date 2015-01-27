@@ -1,4 +1,4 @@
-module MDOL.ArrayOps;
+module Optimization.ArrayOps;
 
 import std.complex;
 import std.math;

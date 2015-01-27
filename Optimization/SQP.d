@@ -1,12 +1,12 @@
-﻿module MDOL.SQP;
+﻿module Optimization.SQP;
 
-import MDOL.ArrayOps;
-import MDOL.BracketAndZoom;
-import MDOL.Complex;
-import MDOL.InteriorPenalty;
-import MDOL.MatrixOps;
-import MDOL.ObjectiveFunction;
-import MDOL.Optimizer;
+import Optimization.ArrayOps;
+import Optimization.BracketAndZoom;
+import Optimization.Complex;
+import Optimization.InteriorPenalty;
+import Optimization.MatrixOps;
+import Optimization.ObjectiveFunction;
+import Optimization.Optimizer;
 
 import core.thread;
 

@@ -1,10 +1,10 @@
-module MDOL.ComplexStep;
+module Optimization.ComplexStep;
 
 import std.complex;
 import std.stdio;
 
-import MDOL.Derivative;
-import MDOL.ObjectiveFunction;
+import Optimization.Derivative;
+import Optimization.ObjectiveFunction;
 
 class ComplexStep : Derivative
 {

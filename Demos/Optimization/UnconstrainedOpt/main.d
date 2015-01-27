@@ -15,16 +15,16 @@ import Plotting.FigPlot;
 import Plotting.Line;
 import Plotting.Color;
 
-import MDOL.Optimizer;
-//import MDOL.GoldenSearch;
-//import MDOL.BracketAndZoom;
-import MDOL.ObjectiveFunction;
-//import MDOL.SecantRoot;
-import MDOL.NewtonRoot;
-//import MDOL.Derivative;
-import MDOL.SteepestDescent;
-import MDOL.ConjugateGradient;
-import MDOL.BfgsNewton;
+import Optimization.Optimizer;
+//import Optimization.GoldenSearch;
+//import Optimization.BracketAndZoom;
+import Optimization.ObjectiveFunction;
+//import Optimization.SecantRoot;
+import Optimization.NewtonRoot;
+//import Optimization.Derivative;
+import Optimization.SteepestDescent;
+import Optimization.ConjugateGradient;
+import Optimization.BfgsNewton;
 
 import scid.bindings.blas.dblas;
 
@@ -400,7 +400,7 @@ void DragCrappyDerivatives()
 	conjGrad.FileOutput = true;
 	steepest.FileOutput = true;
 
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-2;
 
 	writeln();
@@ -555,7 +555,7 @@ void Rosenbrock2CrappyDerivatives()
 	conjGrad.FileOutput = true;
 	steepest.FileOutput = true;
 
-	rose.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	rose.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	rose.StepSize = 1.0e-2;
 
 	writeln();

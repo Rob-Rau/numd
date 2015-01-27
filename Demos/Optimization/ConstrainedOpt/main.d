@@ -15,13 +15,13 @@ import Plotting.FigPlot;
 import Plotting.Line;
 import Plotting.Color;
 
-import MDOL.Complex;
-import MDOL.InteriorPenalty;
-import MDOL.NewtonRoot;
-import MDOL.ObjectiveFunction;
-import MDOL.Optimizer;
-import MDOL.SecantRoot;
-import MDOL.SQP;
+import Optimization.Complex;
+import Optimization.InteriorPenalty;
+import Optimization.NewtonRoot;
+import Optimization.ObjectiveFunction;
+import Optimization.Optimizer;
+import Optimization.SecantRoot;
+import Optimization.SQP;
 
 import scid.bindings.blas.dblas;
 import scid.matrix;
@@ -109,7 +109,7 @@ int main(string[] args)
 	writeln();
 	writeln("Initial guess = ", initialGuess);
 
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-3;
 	//interiorPen.DebugMode = true;
 	//interiorPen.InitialGuess = [8, 5];
@@ -129,7 +129,7 @@ int main(string[] args)
 
 
 	writeln();
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-3;
 	//sqp.DebugMode = true;
 	//sqp.InitialGuess = [8, 5];
@@ -153,7 +153,7 @@ int main(string[] args)
 	initialGuess = [8, 32];
 	writeln("Initial guess = ", initialGuess);
 
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-3;
 	//interiorPen.DebugMode = true;
 	//interiorPen.InitialGuess = [8, 5];
@@ -173,7 +173,7 @@ int main(string[] args)
 	
 	
 	writeln();
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-3;
 	//sqp.DebugMode = true;
 	//sqp.InitialGuess = [8, 5];
@@ -197,7 +197,7 @@ int main(string[] args)
 	initialGuess = [28, 10];
 	writeln("Initial guess = ", initialGuess);
 
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-3;
 	//interiorPen.DebugMode = true;
 	//interiorPen.InitialGuess = [8, 5];
@@ -217,7 +217,7 @@ int main(string[] args)
 	
 	
 	writeln();
-	drag.DerivativeType = "MDOL.FiniteDifference.FiniteDifference";
+	drag.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
 	drag.StepSize = 1.0e-3;
 	//sqp.DebugMode = true;
 	//sqp.InitialGuess = [8, 5];

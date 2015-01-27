@@ -1,4 +1,4 @@
-module MDOL.RootFinder;
+module Optimization.RootFinder;
 
 import std.complex;
 

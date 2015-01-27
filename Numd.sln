@@ -1,23 +1,23 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "LineSearch", "Demos\Optimization\LineSearch\LineSearch.dproj", "{23814DCC-CAB8-4A3A-BEC9-37A619AD4CBB}"
-EndProject
 Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Plotting", "Plotting\Plotting.dproj", "{5B91B4C9-56B4-4E3A-8434-C3CFABED213D}"
 EndProject
 Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Optimization", "Optimization\Optimization.dproj", "{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}"
 EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Derivatives", "Demos\Optimization\Derivatives\Derivatives.dproj", "{198C9AF3-2595-4747-9138-200D38E50698}"
-EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "UnconstrainedOpt", "Demos\Optimization\UnconstrainedOpt\UnconstrainedOpt.dproj", "{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0}"
-EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "ConstrainedOpt", "Demos\Optimization\ConstrainedOpt\ConstrainedOpt.dproj", "{6284E55E-4730-4265-A416-2068F59950B8}"
-EndProject
-Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "GradientFree", "Demos\Optimization\GradientFree\GradientFree.dproj", "{75F565EA-2442-4EA7-8990-E309A61CB7F1}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{948C45E8-9EA4-41E3-A764-C55EA25D3B89}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Optimization", "Optimization", "{09B4F352-A3E8-48AB-B56C-B896D7A30715}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "LineSearch", "Demos\Optimization\LineSearch\LineSearch.dproj", "{23814DCC-CAB8-4A3A-BEC9-37A619AD4CBB}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "ConstrainedOpt", "Demos\Optimization\ConstrainedOpt\ConstrainedOpt.dproj", "{6284E55E-4730-4265-A416-2068F59950B8}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "Derivatives", "Demos\Optimization\Derivatives\Derivatives.dproj", "{198C9AF3-2595-4747-9138-200D38E50698}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "GradientFree", "Demos\Optimization\GradientFree\GradientFree.dproj", "{75F565EA-2442-4EA7-8990-E309A61CB7F1}"
+EndProject
+Project("{3947E667-4C90-4C3A-BEB9-7148D6FE0D7C}") = "UnconstrainedOpt", "Demos\Optimization\UnconstrainedOpt\UnconstrainedOpt.dproj", "{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,5 +71,10 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{09B4F352-A3E8-48AB-B56C-B896D7A30715} = {948C45E8-9EA4-41E3-A764-C55EA25D3B89}
+		{23814DCC-CAB8-4A3A-BEC9-37A619AD4CBB} = {09B4F352-A3E8-48AB-B56C-B896D7A30715}
+		{6284E55E-4730-4265-A416-2068F59950B8} = {09B4F352-A3E8-48AB-B56C-B896D7A30715}
+		{198C9AF3-2595-4747-9138-200D38E50698} = {09B4F352-A3E8-48AB-B56C-B896D7A30715}
+		{75F565EA-2442-4EA7-8990-E309A61CB7F1} = {09B4F352-A3E8-48AB-B56C-B896D7A30715}
+		{8D8E4EAD-3000-4BEA-87EA-7C2275D3F4B0} = {09B4F352-A3E8-48AB-B56C-B896D7A30715}
 	EndGlobalSection
 EndGlobal

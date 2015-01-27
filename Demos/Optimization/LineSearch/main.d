@@ -11,10 +11,10 @@ import Plotting.FigPlot;
 import Plotting.Line;
 import Plotting.Color;
 
-import MDOL.Optimizer;
-import MDOL.GoldenSearch;
-import MDOL.BracketAndZoom;
-import MDOL.ObjectiveFunction;
+import Optimization.Optimizer;
+import Optimization.GoldenSearch;
+import Optimization.BracketAndZoom;
+import Optimization.ObjectiveFunction;
 
 void TestLine2D();
 void TestCountour();
