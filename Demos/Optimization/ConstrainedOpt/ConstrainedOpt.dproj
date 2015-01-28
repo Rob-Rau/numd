@@ -14,7 +14,6 @@
       <Includes>
         <Path>/usr/local/include/d/plplot</Path>
         <Path>..</Path>
-        <Path>$Scid</Path>
       </Includes>
     </Includes>
     <DependentProjectIds>
