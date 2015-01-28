@@ -3,6 +3,11 @@
 import std.stdio;
 import std.conv;
 
+version(unittest)
+{
+	const auto m = new Matrix!(2,2);
+}
+
 class Matrix(size_t r, size_t c, T = real)
 {
 	alias Matrix!(r, c, T) ThisType;
@@ -88,7 +93,7 @@ class Matrix(size_t r, size_t c, T = real)
 		auto expected = new Matrix!(3, 2)(25, 28,
 											57, 64,
 											89, 100);
-			
+
 		assert(m3 == expected);
 	}
 

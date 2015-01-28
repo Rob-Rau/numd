@@ -9,7 +9,6 @@
     <UseDefaultCompiler>true</UseDefaultCompiler>
     <PreferOneStepBuild>true</PreferOneStepBuild>
     <Compiler>DMD2</Compiler>
-    <BaseDirectory>.</BaseDirectory>
     <IncrementalLinking>true</IncrementalLinking>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -38,6 +37,7 @@
     <OutputPath>bin\Unittest</OutputPath>
     <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
     <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <ExtraCompilerArguments>-main</ExtraCompilerArguments>
     <UnittestMode>true</UnittestMode>
     <OutputName>libLinearAlgebra</OutputName>
     <Target>Executable</Target>
