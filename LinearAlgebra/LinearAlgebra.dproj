@@ -46,5 +46,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Matrix.d" />
+    <Compile Include="Vector.d" />
   </ItemGroup>
 </Project>

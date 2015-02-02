@@ -3,11 +3,6 @@
 import std.stdio;
 import std.conv;
 
-version(unittest)
-{
-	const auto m = new Matrix!(2,2);
-}
-
 class Matrix(size_t r, size_t c, T = real)
 {
 	alias Matrix!(r, c, T) ThisType;
@@ -34,7 +29,20 @@ class Matrix(size_t r, size_t c, T = real)
 		}
 		else static assert(0, "Operator not implimented");
 	}
-	
+
+	ThisType opBinary(string op)(real rhs)
+	{
+		static if(op == "*" || op == "/")
+		{
+			auto res = new ThisType;
+			foreach(size_t i, ref element; mData)
+				mixin("res.mData[i] = element"~op~"rhs;");
+
+			return res;
+		}
+		else static assert(0, "Operator not implemented");
+	}
+
 	Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(Matrix!(ir, ic, lhsType) lhs)
 	{
 		static assert(is (T : lhsType));
@@ -52,19 +60,17 @@ class Matrix(size_t r, size_t c, T = real)
 		else static assert(0, "Operator not implemented");
 	}
 
-	string ToString()
+	ThisType opBinaryRight(string op)(real lhs)
 	{
-		string matStr;
-
-		for(int i = 0; i < r; i++)
+		static if(op == "*" || op == "/")
 		{
-			matStr ~= "[";
-			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ to!string(mData[i*c + j]);
-
-			matStr ~= " ]\n";
+			auto res = new ThisType;
+			foreach(size_t i, element; mData)
+				mixin("res.mData[i] = lhs"~op~"element;");
+			
+			return res;
 		}
-		return matStr;
+		else static assert(0, "Operator not implemented");
 	}
 
 	override bool opEquals(Object o)
@@ -80,6 +86,22 @@ class Matrix(size_t r, size_t c, T = real)
 		return true;
 	}
 
+	string ToString()
+	{
+		string matStr;
+		
+		for(int i = 0; i < r; i++)
+		{
+			matStr ~= "[";
+			for(int j = 0; j < c; j++)
+				matStr ~= " " ~ to!string(mData[i*c + j]);
+			
+			matStr ~= " ]\n";
+		}
+		return matStr;
+	}
+
+	// op *
 	unittest
 	{
 		auto m1 = new Matrix!(3, 2)(1, 2,
@@ -97,6 +119,7 @@ class Matrix(size_t r, size_t c, T = real)
 		assert(m3 == expected);
 	}
 
+	// op +
 	unittest
 	{
 		auto m1 = new Matrix!(3, 2)(1, 2,
@@ -116,10 +139,59 @@ class Matrix(size_t r, size_t c, T = real)
 		assert(m3 == expected);
 	}
 
+	// opEquals
+	unittest
+	{
+		auto m1 = new Matrix!(3, 2)(25, 28,
+			57, 64,
+			89, 100);
+
+		auto m2 = new Matrix!(3, 2)(25, 28,
+			57, 64,
+			89, 100);
+
+		assert(m1 == m2);
+	}
+
+	// op scalar *
+	unittest
+	{
+		auto m1 = new Matrix!(3, 2)(1, 2,
+			3, 4,
+			5, 6);
+		real scalar = 2;
+		
+		auto m3 = scalar*m1;
+		
+		auto expected = new Matrix!(3, 2)(2, 4,
+			6, 8,
+			10, 12);
+		
+		assert(m3 == expected);
+	}
+
+	// op scalar /
+	unittest
+	{
+		auto m1 = new Matrix!(3, 2)(2, 4,
+			6, 8,
+			10, 12);
+
+		real scalar = 2;
+
+		auto m2 = m1/2;
+
+		auto expected = new Matrix!(3, 2)(1, 2,
+			3, 4,
+			5, 6);
+
+		assert(m2 == expected);
+	}
+
 private:
 	size_t mRows = r;
 	size_t mCols = c;
 
+package:
 	T[r*c] mData;
 }
-
