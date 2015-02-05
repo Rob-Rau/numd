@@ -17,6 +17,11 @@ class Matrix(size_t r, size_t c, T = real)
 		mData[] = 0;
 	}
 
+	this(ThisType mat)
+	{
+		mData[] = mat.mData[];
+	}
+
 	ThisType opBinary(string op, rhsType)(Matrix!(r, c, rhsType) rhs)
 	{
 		static assert(is (T : rhsType));
@@ -99,6 +104,21 @@ class Matrix(size_t r, size_t c, T = real)
 			matStr ~= " ]\n";
 		}
 		return matStr;
+	}
+
+	// op =
+	unittest
+	{
+		auto m1 = new Matrix!(2, 2)(1, 2,
+			3, 4);
+
+		auto m2 = new Matrix!(2,2)(m1);
+
+		assert(m1 == m2);
+
+		m1.mData[0] = 3;
+
+		assert(m1 != m2);
 	}
 
 	// op *
@@ -187,10 +207,6 @@ class Matrix(size_t r, size_t c, T = real)
 
 		assert(m2 == expected);
 	}
-
-private:
-	size_t mRows = r;
-	size_t mCols = c;
 
 package:
 	T[r*c] mData;

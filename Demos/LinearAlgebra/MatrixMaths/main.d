@@ -3,6 +3,7 @@
 import std.stdio;
 
 import LinearAlgebra.Matrix;
+import LinearAlgebra.Vector;
 
 void main(string[] args)
 {
@@ -24,8 +25,11 @@ void main(string[] args)
 	writeln("m2:");
 	writeln(m2.ToString());
 
+	size_t i = 4;
 	writeln("m4:");
 	writeln(m4.ToString());
+
+	//m4 = new Vector!(i);
 
 	if(m2 == m3)
 		writeln("m2 == m3");

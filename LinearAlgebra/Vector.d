@@ -3,6 +3,7 @@
 import LinearAlgebra.Matrix;
 
 import std.stdio;		
+import std.math;
 alias Vector(size_t l, T = real) = Matrix!(l, 1, T);
 
 
@@ -35,6 +36,26 @@ T dot(size_t l, T)(Vector!(l, T) lhs, Vector!(l, T) rhs)
 		res += lhs.mData[i]*rhs.mData[i];
 
 	return res;
+}
+
+real magnitude(size_t l, T)(Vector!(l, T) rhs)
+{
+	real res = 0;
+	foreach(size_t i, ref element; rhs.mData)
+	{
+		res += element^^2;
+	}
+	res = sqrt(res);
+	return res;
+}
+
+unittest
+{
+	auto vec = new Vector!(3)(1, 1, 0);
+	auto mag = vec.magnitude!(3, real)();
+	auto expected = sqrt(cast(real)2);
+
+	assert(mag == expected);
 }
 
 unittest
