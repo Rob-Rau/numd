@@ -208,6 +208,12 @@ class Matrix(size_t r, size_t c, T = real)
 		assert(m2 == expected);
 	}
 
+	@property size_t rows() { return mRows; };
+	@property size_t columns() { return mCols; };
+
 package:
+	size_t mRows = r;
+	size_t mCols = c;
+
 	T[r*c] mData;
 }

@@ -21,6 +21,7 @@
     <Target>StaticLibrary</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
+    <ExtraCompilerArguments>-cov</ExtraCompilerArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
@@ -37,7 +38,7 @@
     <OutputPath>bin\Unittest</OutputPath>
     <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
     <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
-    <ExtraCompilerArguments>-main</ExtraCompilerArguments>
+    <ExtraCompilerArguments>-main -cov</ExtraCompilerArguments>
     <UnittestMode>true</UnittestMode>
     <OutputName>libLinearAlgebra</OutputName>
     <Target>Executable</Target>
