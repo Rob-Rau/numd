@@ -24,7 +24,7 @@ class Matrix(size_t r, size_t c, T = real)
 
 	ThisType opBinary(string op, rhsType)(Matrix!(r, c, rhsType) rhs)
 	{
-		static assert(is (T : rhsType));
+		//static assert(is (T : rhsType));
 		static if(op == "+" || op == "-")
 		{
 			auto res = new ThisType;
@@ -106,108 +106,6 @@ class Matrix(size_t r, size_t c, T = real)
 		return matStr;
 	}
 
-	// op =
-	unittest
-	{
-		auto m1 = new Matrix!(2, 2)(1, 2,
-			3, 4);
-
-		auto m2 = new Matrix!(2,2)(m1);
-
-		assert(m1 == m2);
-
-		m1.mData[0] = 3;
-
-		assert(m1 != m2);
-	}
-
-	// op *
-	unittest
-	{
-		auto m1 = new Matrix!(3, 2)(1, 2,
-									3, 4,
-									5, 6);
-		auto m2 = new Matrix!(2, 2)(7, 8,
-									9, 10);
-
-		auto m3 = m1 * m2;
-
-		auto expected = new Matrix!(3, 2)(25, 28,
-											57, 64,
-											89, 100);
-
-		assert(m3 == expected);
-	}
-
-	// op +
-	unittest
-	{
-		auto m1 = new Matrix!(3, 2)(1, 2,
-			3, 4,
-			5, 6);
-		
-		auto m2 = new Matrix!(3, 2)(2, 3,
-			4, 5,
-			6, 7);
-
-		auto m3 = m1 + m2;
-
-		auto expected = new Matrix!(3, 2)(3, 5,
-			7, 9,
-			11, 13);
-
-		assert(m3 == expected);
-	}
-
-	// opEquals
-	unittest
-	{
-		auto m1 = new Matrix!(3, 2)(25, 28,
-			57, 64,
-			89, 100);
-
-		auto m2 = new Matrix!(3, 2)(25, 28,
-			57, 64,
-			89, 100);
-
-		assert(m1 == m2);
-	}
-
-	// op scalar *
-	unittest
-	{
-		auto m1 = new Matrix!(3, 2)(1, 2,
-			3, 4,
-			5, 6);
-		real scalar = 2;
-		
-		auto m3 = scalar*m1;
-		
-		auto expected = new Matrix!(3, 2)(2, 4,
-			6, 8,
-			10, 12);
-		
-		assert(m3 == expected);
-	}
-
-	// op scalar /
-	unittest
-	{
-		auto m1 = new Matrix!(3, 2)(2, 4,
-			6, 8,
-			10, 12);
-
-		real scalar = 2;
-
-		auto m2 = m1/2;
-
-		auto expected = new Matrix!(3, 2)(1, 2,
-			3, 4,
-			5, 6);
-
-		assert(m2 == expected);
-	}
-
 	@property size_t rows() { return mRows; };
 	@property size_t columns() { return mCols; };
 
@@ -216,4 +114,106 @@ package:
 	size_t mCols = c;
 
 	T[r*c] mData;
+}
+
+// op =
+unittest
+{
+	auto m1 = new Matrix!(2, 2)(1, 2,
+		3, 4);
+	
+	auto m2 = new Matrix!(2,2)(m1);
+	
+	assert(m1 == m2, "Matrix assignment test failed");
+	
+	m1.mData[0] = 3;
+	
+	assert(m1 != m2, "Matrix assignment test failed");
+}
+
+// op *
+unittest
+{
+	auto m1 = new Matrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	auto m2 = new Matrix!(2, 2)(7, 8,
+		9, 10);
+	
+	auto m3 = m1 * m2;
+	
+	auto expected = new Matrix!(3, 2)(25, 28,
+		57, 64,
+		89, 100);
+	
+	assert(m3 == expected, "Matrix multiplication test failed");
+}
+
+// op +
+unittest
+{
+	auto m1 = new Matrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	
+	auto m2 = new Matrix!(3, 2)(2, 3,
+		4, 5,
+		6, 7);
+	
+	auto m3 = m1 + m2;
+	
+	auto expected = new Matrix!(3, 2)(3, 5,
+		7, 9,
+		11, 13);
+	
+	assert(m3 == expected, "Matrix addition test failed");
+}
+
+// opEquals
+unittest
+{
+	auto m1 = new Matrix!(3, 2)(25, 28,
+		57, 64,
+		89, 100);
+	
+	auto m2 = new Matrix!(3, 2)(25, 28,
+		57, 64,
+		89, 100);
+	
+	assert(m1 == m2, "Matrix equality test failed");
+}
+
+// op scalar *
+unittest
+{
+	auto m1 = new Matrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	real scalar = 2;
+	
+	auto m3 = scalar*m1;
+	
+	auto expected = new Matrix!(3, 2)(2, 4,
+		6, 8,
+		10, 12);
+	
+	assert(m3 == expected, "Matrix scalar multiplication test failed");
+}
+
+// op scalar /
+unittest
+{
+	auto m1 = new Matrix!(3, 2)(2, 4,
+		6, 8,
+		10, 12);
+	
+	real scalar = 2;
+	
+	auto m2 = m1/2;
+	
+	auto expected = new Matrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	
+	assert(m2 == expected, "Matrix scalar division test failed");
 }

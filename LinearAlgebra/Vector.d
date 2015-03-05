@@ -5,12 +5,7 @@ import LinearAlgebra.Matrix;
 import std.stdio;
 import std.math;
 
-unittest
-{
-	auto vec = new Vector!(3);
-}
-
-class Vector(size_t l, T = real) : public Matrix!(l, 1, T)
+class Vector(size_t l, T = real) : Matrix!(l, 1, T)
 {
 
 	this(in T[l] values...)
@@ -65,46 +60,46 @@ class Vector(size_t l, T = real) : public Matrix!(l, 1, T)
 		res.mData[] = mData[]/magnitude();
 		return res;
 	}
+}
 
-	unittest
-	{
-		auto vec = new Vector!(3)(1.0, 1.0, 0.0);
-		auto mag = vec.magnitude();
-		auto expected = sqrt(cast(real)2);
+unittest
+{
+	auto vec = new Vector!(3)(1.0, 1.0, 0.0);
+	auto mag = vec.magnitude();
+	auto expected = sqrt(cast(real)2);
+	
+	assert(mag == expected, "Vector magnitude test failed");
+}
 
-		assert(mag == expected, "Vector magnitude test failed");
-	}
+unittest
+{
+	auto vec1 = new Vector!(3)(1, 1, 0);
+	auto vec2 = vec1.normalize();
+	auto expected = new Vector!(3)(1.0/sqrt(2.0), 1.0/sqrt(2.0), 0);
+	
+	assert(vec2 == expected, "Vector normalize test failed");
+}
 
-	unittest
-	{
-		auto vec1 = new Vector!(3)(1, 1, 0);
-		auto vec2 = vec1.normalize();
-		auto expected = new Vector!(3)(1.0/sqrt(2.0), 1.0/sqrt(2.0), 0);
+unittest
+{
+	auto vec1 = new Vector!(3)(1, 2, 3);
+	auto vec2 = new Vector!(3)(4, 5, 6);
+	
+	auto res = vec1.dot(vec2);
+	
+	real expected = 32;
+	
+	assert(res == expected, "Vector dot product test failed");
+}
 
-		assert(vec2 == expected, "Vector normalize test failed");
-	}
-
-	unittest
-	{
-		auto vec1 = new Vector!(3)(1, 2, 3);
-		auto vec2 = new Vector!(3)(4, 5, 6);
-
-		auto res = vec1.dot(vec2);
-
-		real expected = 32;
-
-		assert(res == expected, "Vector dot product test failed");
-	}
-
-	unittest
-	{
-		auto vec1 = new Vector!(3)(1, 2, 3);
-		auto vec2 = new Vector!(3)(4, 5, 6);
-		
-		auto vec3 = vec1.cross(vec2);
-		
-		auto expected = new Vector!(3)(-3, 6, -3);
-
-		assert(vec3 == expected, "Vector cross product failed");
-	}
+unittest
+{
+	auto vec1 = new Vector!(3)(1, 2, 3);
+	auto vec2 = new Vector!(3)(4, 5, 6);
+	
+	auto vec3 = vec1.cross(vec2);
+	
+	auto expected = new Vector!(3)(-3, 6, -3);
+	
+	assert(vec3 == expected, "Vector cross product failed");
 }
