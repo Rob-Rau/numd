@@ -12,10 +12,8 @@ void main(string[] args)
 								5, 6);
 	auto m2 = new Matrix!(2, 2)(7, 8,
 								9, 10);
-
-	auto m3 = new Matrix!(2, 2)(7, 8,
-								9, 10);
-	//auto m3 = m1 + m2;
+		
+	auto m3 = m1 + m2;
 
 	auto m4 = m1 * m2;
 
@@ -29,7 +27,7 @@ void main(string[] args)
 	writeln("m4:");
 	writeln(m4.ToString());
 
-	//m4 = new Vector!(i);
+	//auto vec = new Vector!(i);
 
 	if(m2 == m3)
 		writeln("m2 == m3");
