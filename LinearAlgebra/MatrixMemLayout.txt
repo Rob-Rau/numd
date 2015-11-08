@@ -1,0 +1,11 @@
+
+Matrix (say 4x3):
+0          3
+|---row1---|
+4          7
+|---row2---|
+8          11
+|---row3---|
+
+In layed out in memory:
+|---row1---|---row2---|---row3---|
