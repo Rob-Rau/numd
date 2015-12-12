@@ -40,6 +40,7 @@ class BfgsNewton(size_t dims) : Optimizer
 		Result result;
 		bool converged = false;
 		double error = 1;
+		double new_error = 1;
 
 		alias Vector!(dims, double) Vec;
 		alias Matrix!(dims, dims, double) Mat;
@@ -103,13 +104,15 @@ class BfgsNewton(size_t dims) : Optimizer
 		pk[] = nrm2(cast(int)pk.length, cast(double*)pk, 1)^^(-1)*pk[];
 		vec_pk = (mat_Vtmp1*vec_gk).normalize();
 		if(DebugMode) writeln("gk = ", gk, "\tpk = ", pk);
-
+		/*
 		writeln("gk = ", gk, "\tpk = ", pk);
 		writeln("vec_gk = ", vec_gk.ToString());
 		writeln("vec_pk = ", vec_pk.ToString());
-
-		lineSearch.P = pk;
-		lineSearch.InitialGuess = xk;
+		*/
+		//lineSearch.P = pk;
+		//lineSearch.InitialGuess = xk;
+		lineSearch.P = vec_pk.mData;
+		lineSearch.InitialGuess = vec_xk.mData;
 		lineResult = lineSearch.Optimize(objectiveFunction);
 		minorIterations += lineResult.Iterations;
 		lineResultLast = lineResult;
@@ -124,12 +127,13 @@ class BfgsNewton(size_t dims) : Optimizer
 		pkLast[] = pk;
 		gkLast[] = gk;
 		xk = lineResult.DesignVariables;
-		vec_xk.mData[] = lineResult.DesignVariables;
+		vec_xk[] = lineResult.DesignVariables;
 		if(DebugMode) writeln("xk = ", xk);
 		
 		// Compute gradient at new point.
 		gk[] = objectiveFunction.Gradient(xk);
-		vec_gk.mData[] = objectiveFunction.Gradient(vec_xk.mData);
+		vec_gk[] = objectiveFunction.Gradient(vec_xk[]);
+		//vec_gk = gk;
 		// Compute new direction at point.
 		//pk[] = -nrm2(cast(int)gk.length, cast(double*)gk, 1)^^(-1)*gk[];
 		if(DebugMode) writeln("gk = ", gk, "\tpk = ", pk);
@@ -157,7 +161,7 @@ class BfgsNewton(size_t dims) : Optimizer
 		auto mat_yksk = vec_yk*vec_sk.transpose();
 		//gemm('n', 'n', cast(int)sk.length, cast(int)yk.length, 1, 1, cast(double*)sk, cast(int)sk.length, cast(double*)yk, 1, 0, cast(double*)skyk, cast(int)sk.length);
 		//gemm('n', 'n', cast(int)yk.length, cast(int)sk.length, 1, 1, cast(double*)yk, cast(int)yk.length, cast(double*)sk, 1, 0, cast(double*)yksk, cast(int)yk.length);
-
+		/*
 		auto tmp_skyk = Mat(skyk);
 		auto tmp_yksk = Mat(yksk);
 
@@ -171,7 +175,7 @@ class BfgsNewton(size_t dims) : Optimizer
 		writeln("yksk");
 		writeln(tmp_yksk.ToString());
 		writeln(mat_yksk.ToString());
-
+		*/
 		if(DebugMode) writeln("here");
 
 		skyk[] *= skykDot^^(-1);
@@ -188,11 +192,12 @@ class BfgsNewton(size_t dims) : Optimizer
 		//gemm('n', 'n', cast(int)sk.length, cast(int)sk.length, 1, 1, cast(double*)sk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)sksk, cast(int)sk.length);
 		sksk[] *= skykDot^^(-1);
 		mat_sksk *= vec_skykDot^^(-1);
+		/*
 		auto tmp_mat = Mat(sksk);
 		writeln("sksk");
 		writeln(tmp_mat.ToString());
 		writeln(mat_sksk.ToString());
-
+		*/
 
 		mat_Vtmp1 = mat_I - mat_yksk/vec_skykDot;
 		Vtmp1[] = I[] - yksk[]*skykDot^^(-1);
@@ -202,12 +207,12 @@ class BfgsNewton(size_t dims) : Optimizer
 		//gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp2, cast(int)sk.length, cast(double*)Vtmp1, cast(int)sk.length, 0, cast(double*)Vtmp3, cast(int)sk.length);
 		mat_Vtmp3 = mat_Vtmp2*mat_Vtmp1;
 
-
+		/*
 		auto tmp_Vk = Mat(Vk);
 		auto tmp_Vtmp1 = Mat(Vtmp1);
 		auto tmp_Vtmp2 = Mat(Vtmp2);
 		auto tmp_Vtmp3 = Mat(Vtmp3);
-		/*
+
 		writeln("Vk");
 		writeln(tmp_Vk.ToString());
 		writeln(mat_Vk.ToString());
@@ -248,7 +253,7 @@ class BfgsNewton(size_t dims) : Optimizer
 		double epa = 1.0e-6;
 		double epr = 1.0e-6;
 		double epg = 1.0e-3;
-
+		/*
 		auto tmp_xk = Vec(xk);
 		auto tmp_gk = Vec(gk);
 		auto tmp_pk = Vec(pk);
@@ -264,6 +269,7 @@ class BfgsNewton(size_t dims) : Optimizer
 		writeln("pk");
 		writeln(tmp_pk.ToString());
 		writeln(vec_pk.ToString());
+		*/
 		//while(error >= Tolerance)
 		//while( !(abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue) > (epa + epr*abs(lineResultLast.ObjectiveFunctionValue))) && !(nrm2(cast(int)gkLast.length, cast(double*)gkLast, 1) <= epg) )
 		while(!converged)
@@ -280,23 +286,33 @@ class BfgsNewton(size_t dims) : Optimizer
 			//writeln("gk-1*pk-1 = ", dot(cast(int)gkLast.length, cast(double*)gkLast, 1, cast(double*)pkLast, 1));
 			//writeln("gk*pk = ", dot(cast(int)gk.length, cast(double*)gk, 1, cast(double*)pk, 1));
 			//writeln("AlphaNew = ", lineSearch.AlphaInitial);
-			lineSearch.P = pk;
-			
-			lineSearch.InitialGuess[] = xk;
-			
+			//lineSearch.P = pk;
+			if(DebugMode) writeln("Assign pk");
+			lineSearch.P = vec_pk.mData;
+
+			if(DebugMode) writeln("Assign xk");
+			//lineSearch.InitialGuess[] = xk;
+			lineSearch.InitialGuess = vec_xk.mData;
+			if(DebugMode) writeln("opt");
 			lineResult = lineSearch.Optimize(objectiveFunction);
+			if(DebugMode) writeln("line opt");
 			minorIterations += lineResult.Iterations;
 			//lineResultLast = lineResult;
+			vec_xkLast = vec_xk;
 			xkLast[] = xk;
-			
+
+			vec_pkLast = vec_pk;
 			pkLast[] = pk;
-			
+
+			vec_gkLast = vec_gk;
 			gkLast[] = gk;
-			
+			if(DebugMode) writeln("getting lineResult");
 			xk[] = lineResult.DesignVariables;
-			
+			vec_xk[] = lineResult.DesignVariables;
 			// Compute gradient at new point.
 			gk = objectiveFunction.Gradient(xk);
+			//vec_gk = gk;
+			vec_gk[] = objectiveFunction.Gradient(vec_xk);
 
 			if(iterations%5)
 			//if(true)
@@ -305,46 +321,62 @@ class BfgsNewton(size_t dims) : Optimizer
 				//beta = dot(cast(int)gk.length, cast(double*)gk, 1, cast(double*)gk, 1)/dot(cast(int)gkLast.length, cast(double*)gkLast, 1, cast(double*)gkLast, 1);
 
 				yk[] = gk[] - gkLast[];
+				vec_yk = vec_gk - vec_gkLast;
 				sk[] = xk[] - xkLast[];
+				vec_sk = vec_xk - vec_xkLast;
 
 				skykDot = dot(cast(int)yk.length, cast(double*)yk, 1, cast(double*)sk, 1);
-
+				vec_skykDot = vec_sk.dot(vec_yk);
 
 				gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, 1, 1, cast(double*)sk, cast(int)1, cast(double*)yk, cast(int)yk.length, 0, cast(double*)skyk, cast(int)sk.length);
+				mat_skyk = vec_sk*vec_yk.transpose();
 				gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)yk.length, cast(int)sk.length, 1, 1, cast(double*)yk, cast(int)1, cast(double*)sk, cast(int)sk.length, 0, cast(double*)yksk, cast(int)yk.length);
+				mat_yksk = vec_yk*vec_sk.transpose();
 				//gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, 1, 1, cast(double*)sk, cast(int)sk.length, cast(double*)yk, 1, 0, cast(double*)skyk, cast(int)sk.length);
 				//gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)yk.length, cast(int)sk.length, 1, 1, cast(double*)yk, cast(int)yk.length, cast(double*)sk, 1, 0, cast(double*)yksk, cast(int)yk.length);
 				//gemm('n', 'n', cast(int)sk.length, cast(int)yk.length, 1, 1, cast(double*)sk, cast(int)sk.length, cast(double*)yk, 1, 0, cast(double*)skyk, cast(int)sk.length);
 				//gemm('n', 'n', cast(int)yk.length, cast(int)sk.length, 1, 1, cast(double*)yk, cast(int)yk.length, cast(double*)sk, 1, 0, cast(double*)yksk, cast(int)yk.length);
 				
 				skyk[] *= skykDot^^(-1);
+				mat_skyk /= vec_skykDot;
 				Vtmp1[] = I[] - skyk[];
+				mat_Vtmp1 = mat_I - mat_skyk;
 				//writeln("here");
 				gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp1, cast(int)sk.length, cast(double*)VkLast, cast(int)sk.length, 0, cast(double*)Vtmp2, cast(int)sk.length);
+				mat_Vtmp2 = mat_Vtmp1*mat_VkLast;
 				//writeln("there");
 				gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)sk.length, 1, 1, cast(double*)sk, 1, cast(double*)sk, cast(int)sk.length, 0, cast(double*)sksk, cast(int)sk.length);
+				mat_sksk = vec_sk*vec_sk.transpose();
 				//gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp1, cast(int)sk.length, cast(double*)VkLast, cast(int)sk.length, 0, cast(double*)Vtmp2, cast(int)sk.length);
 				//gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)sk.length, 1, 1, cast(double*)sk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)sksk, cast(int)sk.length);
 				//gemm('n', 'n', cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp1, cast(int)sk.length, cast(double*)VkLast, cast(int)sk.length, 0, cast(double*)Vtmp2, cast(int)sk.length);
 				//gemm('n', 'n', cast(int)sk.length, cast(int)sk.length, 1, 1, cast(double*)sk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)sksk, cast(int)sk.length);
 				sksk[] *= skykDot^^(-1);
+				mat_sksk /= vec_skykDot;
 
 				Vtmp1[] = I[] - yksk[]*skykDot^^(-1);
-				
+				mat_Vtmp1 = mat_I - mat_yksk/vec_skykDot;
+
 				//gemm('n', 'n', cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp2, cast(int)sk.length, cast(double*)Vtmp1, cast(int)sk.length, 0, cast(double*)Vtmp3, cast(int)sk.length);
 				gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp2, cast(int)sk.length, cast(double*)Vtmp1, cast(int)sk.length, 0, cast(double*)Vtmp3, cast(int)sk.length);				
+				mat_Vtmp3 = mat_Vtmp2*mat_Vtmp1;
 				//gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)yk.length, cast(int)yk.length, 1, cast(double*)Vtmp2, cast(int)sk.length, cast(double*)Vtmp1, cast(int)sk.length, 0, cast(double*)Vtmp3, cast(int)sk.length);				
 				Vk[] = Vtmp3[] + sksk[];
+				mat_Vk = mat_Vtmp3 + mat_sksk;
 				VkLast[] = Vk;
+				mat_VkLast = mat_Vk;
 			
 			}
 			else
 			{
 				Vk[] = I;
+				mat_Vk = Mat.Identity();
 			}
 			Vtmp1[] = -Vk[];
+			mat_Vtmp1 = -mat_Vk;
 			//CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans
 			gemv(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, cast(int)gk.length, cast(int)gk.length, 1, cast(double*)Vtmp1, cast(int)gk.length, cast(double*)gk, 1, 0, cast(double*)pk, 1);
+			vec_pk = (mat_Vtmp1*vec_gk).normalize();
 			//gemv(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, cast(int)gk.length, cast(int)gk.length, 1, cast(double*)Vtmp1, cast(int)gk.length, cast(double*)gk, 1, 0, cast(double*)pk, 1);
 			//gemv('n', cast(int)gk.length, cast(int)gk.length, 1, cast(double*)Vtmp1, cast(int)gk.length, cast(double*)gk, 1, 0, cast(double*)pk, 1);
 			pk[] = nrm2(cast(int)pk.length, cast(double*)pk, 1)^^(-1)*pk[];
@@ -367,12 +399,15 @@ class BfgsNewton(size_t dims) : Optimizer
 				//writefln(" current = %20.20f \t previous = %20.20f", lineResult.ObjectiveFunctionValue, lineResultLast.ObjectiveFunctionValue);
 				//writefln("%20.20f should be > %20.20f", abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue), (epa + epr*abs(lineResultLast.ObjectiveFunctionValue)));
 				//writefln("%20.20f should be < %20.20f", nrm2(cast(int)gkLast.length, cast(double*)gkLast, 1), epg);
-				if((abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue) < (epa + epr*abs(lineResultLast.ObjectiveFunctionValue))) && (nrm2(cast(int)gkLast.length, cast(double*)gkLast, 1) <= epg))
+				//if((abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue) < (epa + epr*abs(lineResultLast.ObjectiveFunctionValue))) && (nrm2(cast(int)gkLast.length, cast(double*)gkLast, 1) <= epg))
+				if((abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue) < (epa + epr*abs(lineResultLast.ObjectiveFunctionValue))) && (vec_gkLast.magnitude() <= epg))
 					converged = true;
 			}
 
 			tmp[] = xk[] - xkLast[];
+			vec_tmp = vec_xk - vec_xkLast;
 			error = nrm2(cast(int)tmp.length, cast(double*)(tmp), 1)/(1 + nrm2(cast(int)xkLast.length, cast(double*)xkLast, 1)) + abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue)/(1+abs(lineResultLast.ObjectiveFunctionValue));
+			error = vec_tmp.magnitude()/(1 + vec_xkLast.magnitude()) + abs(lineResult.ObjectiveFunctionValue - lineResultLast.ObjectiveFunctionValue)/(1+abs(lineResultLast.ObjectiveFunctionValue));
 			lineResultLast = lineResult;
 			lineSearch.AlphaInitial = 1;
 			//lineSearch.AlphaInitial = lineSearch.AlphaInitial*(dot(cast(int)gkLast.length, cast(double*)gkLast, 1, cast(double*)pkLast, 1)/dot(cast(int)gk.length, cast(double*)gk, 1, cast(double*)pk, 1));
@@ -394,6 +429,27 @@ class BfgsNewton(size_t dims) : Optimizer
 		result = lineResult;
 		result.Iterations = iterations;
 		result.MinorIterations = minorIterations;
+		/*
+		writeln("error");
+		writeln(error);
+		writeln(new_error);
+
+		auto tmp_xk = Vec(xk);
+		auto tmp_gk = Vec(gk);
+		auto tmp_pk = Vec(pk);
+		
+		writeln("xk");
+		writeln(tmp_xk.ToString());
+		writeln(vec_xk.ToString());
+		
+		writeln("gk");
+		writeln(tmp_gk.ToString());
+		writeln(vec_gk.ToString());
+		
+		writeln("pk");
+		writeln(tmp_pk.ToString());
+		writeln(vec_pk.ToString());
+		*/
 		//writeln("Error = ", error, "\txk = ", result.DesignVariables);
 		return result;
 	}
@@ -406,16 +462,7 @@ class BfgsNewton(size_t dims) : Optimizer
 
 version(unittest)
 {
-	/*
-	import Optimization.ArrayOps;
-	import Optimization.BracketAndZoom;
-	import Optimization.MatrixOps;
-	import Optimization.ObjectiveFunction;
-	import Optimization.Optimizer;
-	
-	import LinearAlgebra.Matrix;
-	import LinearAlgebra.Vector;
-	*/
+	import core.memory;
 	import Optimization.SecantRoot;
 	import std.math;
 	import std.complex;
@@ -542,7 +589,7 @@ version(unittest)
 		bfgs.InitialGuess = [35, 10];
 		
 		writeln();
-		bfgs.DebugMode = false;
+		//bfgs.DebugMode = true;
 		bfgs.ErrorConvergence = true;
 		bfgs.PointFilename = "BfgsDragPoints1.csv";
 		bfgs.ErrorFilename = "BfgsDragError1.csv";
@@ -553,7 +600,7 @@ version(unittest)
 		writeln("\tConverged in ", result.Iterations, " iterations.");
 		writeln("\tComputation time: ", result.ComputationTime, " usecs.");
 		writeln("\tMinor iterations: ", result.MinorIterations);
-		
+
 		assert(abs(result.ObjectiveFunctionValue - 191.9016258727) < 1.0e-6, "BFGS Quasi-Newton test 2 failed");
 	}
 
@@ -587,7 +634,6 @@ version(unittest)
 
 	unittest
 	{
-
 		auto bfgs = new BfgsNewton!4;
 		
 		auto rose = new Rosenbrock;

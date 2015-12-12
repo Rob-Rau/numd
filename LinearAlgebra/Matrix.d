@@ -41,6 +41,7 @@ alias Vector(size_t l, T = real) = Matrix!(l, 1, T);
 struct Matrix(size_t r, size_t c, T = real)
 {
 	alias Matrix!(r, c, T) ThisType;
+	alias mData this;
 
 	this(in T[r*c] values...)
 	{
@@ -418,6 +419,12 @@ struct Matrix(size_t r, size_t c, T = real)
 	{
 		//writeln("In opAssign 2");
 		mData[] = rhs.mData[];
+		return this;
+	}
+
+	ref ThisType opAssign(const T[] rhs)
+	{
+		mData[] = rhs[];
 		return this;
 	}
 
