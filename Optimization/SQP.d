@@ -15,7 +15,9 @@ import std.complex;
 import std.math;
 import std.stdio;
 
-import scid.bindings.blas.dblas;
+//import scid.bindings.lapack.dlapack;
+//import scid.bindings.blas.dblas;
+import cblas;
 import scid.matrix;
 import scid.linalg;
 
@@ -165,7 +167,8 @@ class SQP : Optimizer
 
 			double skykDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)yk, 1);
 
-			gemm('n', 'n', 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk, cast(int)sk.length, 0, cast(double*)skTmp, 1);
+			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk, cast(int)sk.length, 0, cast(double*)skTmp, 1);
+			//gemm('n', 'n', 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk, cast(int)sk.length, 0, cast(double*)skTmp, 1);
 			double skBkdot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)skTmp, 1);
 
 			if( skykDot >= 0.2*skBkdot)
@@ -176,18 +179,25 @@ class SQP : Optimizer
 			{
 				theta = (0.8*skBkdot)/(skBkdot - skykDot);
 			}
-
-			gemv('n', cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
+			//CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans
+			gemv(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
+			//gemv('n', cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
 			rk[] = theta*yk[] + (1 - theta)*skTmp[];
 
 			BkLast[] = Bk[];
 
+			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)BkLast, cast(int)sk.length, 0, cast(double*)skTmp1, 1);
+			
+			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)skTmp.length, cast(int)skTmp.length, 1, 1, cast(double*)skTmp, cast(int)skTmp.length, cast(double*)skTmp1, 1, 0, cast(double*)Bktmp, cast(int)skTmp.length);
+			
+			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)rk.length, cast(int)rk.length, 1, 1, cast(double*)rk, cast(int)rk.length, cast(double*)rk, 1, 0, cast(double*)rkTmp, cast(int)rk.length);
+			/*
 			gemm('n', 'n', 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)BkLast, cast(int)sk.length, 0, cast(double*)skTmp1, 1);
 
 			gemm('n', 'n', cast(int)skTmp.length, cast(int)skTmp.length, 1, 1, cast(double*)skTmp, cast(int)skTmp.length, cast(double*)skTmp1, 1, 0, cast(double*)Bktmp, cast(int)skTmp.length);
 
 			gemm('n', 'n', cast(int)rk.length, cast(int)rk.length, 1, 1, cast(double*)rk, cast(int)rk.length, cast(double*)rk, 1, 0, cast(double*)rkTmp, cast(int)rk.length);
-
+			*/
 			double skrkDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)rk, 1);
 
 

@@ -15,7 +15,7 @@ abstract class ObjectiveFunction : IGradient
 
 	Complex!double[] Constraint(Complex!double[] designVar);
 
-	double[] Gradient(double[] point)
+	double[] Gradient(in double[] point)
 	{
 		//writeln("Computing gradient");
 		auto diff = cast(Derivative)Object.factory(DerivativeType);
@@ -38,7 +38,7 @@ abstract class ObjectiveFunction : IGradient
 		return grad;
 	}
 
-	double[][] ConstraintGradient(double[] point)
+	double[][] ConstraintGradient(in double[] point)
 	{
 		//writeln("Computing gradient");
 		auto diff = cast(Derivative)Object.factory(DerivativeType);

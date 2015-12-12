@@ -13,9 +13,16 @@
     <Includes>
       <Includes>
         <Path>.</Path>
-        <Path>${Scid}</Path>
+        <Path>..</Path>
+        <Path>/usr/local/include/d</Path>
+        <Path>/home/rrau/cblas/source</Path>
       </Includes>
     </Includes>
+    <DependentProjectIds>
+      <DependentProjectIds>
+        <String>{A4B62972-7B35-4DFA-892F-BED5DA910722}</String>
+      </DependentProjectIds>
+    </DependentProjectIds>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -27,7 +34,7 @@
     <Target>StaticLibrary</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>/usr/local/lib/libscid.a /usr/lib/libblas.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>/usr/local/lib/libscid-dmd.a /usr/lib/liblapack.a /home/rrau/cblas/libcblas.a /usr/lib/libcblas.so.3 /usr/lib/x86_64-linux-gnu/libgfortran.so.3</ExtraLinkerArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
@@ -50,7 +57,8 @@
     <Target>Executable</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>/usr/local/lib/libscid.a /usr/lib/libblas.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>/home/rrau/cblas/libcblas.a /usr/lib/libopenblas.so.0 /usr/local/lib/libscid-dmd.a /usr/lib/liblapack.a /usr/lib/x86_64-linux-gnu/libgfortran.so.3 /home/rrau/numd/LinearAlgebra/bin/Debug/libLinearAlgebra.a</ExtraLinkerArguments>
+    <ExtraCompilerArguments>-main</ExtraCompilerArguments>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Optimizer.d" />

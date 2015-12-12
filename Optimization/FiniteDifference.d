@@ -8,7 +8,7 @@ import Optimization.ObjectiveFunction;
 
 class FiniteDifference : Derivative
 {
-	final override double Compute(ObjectiveFunction func, double[] point, int dimension)
+	final override double Compute(ObjectiveFunction func, in double[] point, int dimension)
 	{
 		//writeln("In finite diff");
 		Complex!double[] leftPoint, rightPoint;
@@ -50,7 +50,7 @@ class FiniteDifference : Derivative
 		return (func.Compute(leftPoint).re - func.Compute(rightPoint).re)/(2*StepSize);
 	}
 
-	final override double Compute(DerivativeEquation func, double[] point, int dimension)
+	final override double Compute(DerivativeEquation func, in double[] point, int dimension)
 	{
 		//writeln("In finite diff");
 		Complex!double[] leftPoint, rightPoint;

@@ -10,7 +10,9 @@ import std.algorithm;
 import std.complex;
 import std.stdio;
 import std.math;
-import scid.bindings.blas.dblas;
+//import scid.bindings.lapack.dlapack;
+//import scid.bindings.blas.dblas;
+import cblas;
 
 class BracketAndZoom : Optimizer
 {

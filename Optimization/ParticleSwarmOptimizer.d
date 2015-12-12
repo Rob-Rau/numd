@@ -13,8 +13,9 @@ import std.conv;
 import std.math;
 import std.stdio;
 
-import scid.bindings.blas.dblas;	
-
+//import scid.bindings.lapack.dlapack;
+//import scid.bindings.blas.dblas;	
+import cblas;
 
 class ParticleSwarmOptimizer : Optimizer
 {

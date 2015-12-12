@@ -8,7 +8,7 @@ import Optimization.ObjectiveFunction;
 
 class ComplexStep : Derivative
 {
-	final override double Compute(ObjectiveFunction func, double[] point, int dimension)
+	final override double Compute(ObjectiveFunction func, in double[] point, int dimension)
 	{
 		//writeln("In ComplexStep");
 		Complex!double[] cPoint;
@@ -36,7 +36,7 @@ class ComplexStep : Derivative
 		return f.im/StepSize;
 	}
 
-	final override double Compute(DerivativeEquation func, double[] point, int dimension)
+	final override double Compute(DerivativeEquation func, in double[] point, int dimension)
 	{
 		//writeln("In ComplexStep");
 		Complex!double[] cPoint;

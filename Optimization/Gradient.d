@@ -2,5 +2,5 @@ module Optimization.Gradient;
 
 interface IGradient
 {
-	double[] Gradient(double[] point);
+	double[] Gradient(in double[] point);
 }

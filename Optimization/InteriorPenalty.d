@@ -16,7 +16,9 @@ import std.conv;
 import std.math;
 import std.stdio;
 
-import scid.bindings.blas.dblas;
+import cblas;
+//import scid.bindings.lapack.dlapack;
+//import scid.bindings.blas.dblas;
 
 abstract class InteriorPenaltyFunction : ObjectiveFunction
 {
@@ -80,7 +82,7 @@ class InteriorPenalty : Optimizer
 		Result innerRes;
 		Result innerResLast;
 		InteriorPenaltyFunction penalty = new LogarithmicPenalty;
-		Optimizer optimizer = new BfgsNewton;
+		Optimizer optimizer = new BfgsNewton!9;
 		optimizer.DebugMode = DebugMode;
 		//optimizer.PointFilename = PointFilename;
 		//optimizer.PointFilename = BfgsPoints.;

@@ -1,10 +1,10 @@
 module Optimization.Optimizer;
 
+import core.time;
+import Optimization.ObjectiveFunction;
 import std.complex;
 import std.math;
 import std.stdio;
-import core.time;
-import Optimization.ObjectiveFunction;
 
 struct Result
 {

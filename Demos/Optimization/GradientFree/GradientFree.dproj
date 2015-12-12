@@ -10,17 +10,11 @@
     <PreferOneStepBuild>true</PreferOneStepBuild>
     <Compiler>DMD2</Compiler>
     <IncrementalLinking>true</IncrementalLinking>
-    <DependentProjectIds>
-      <DependentProjectIds>
-        <String>{5B91B4C9-56B4-4E3A-8434-C3CFABED213D}</String>
-        <String>{669F6A08-3DA9-46A7-8DAB-AE64D71724AA}</String>
-      </DependentProjectIds>
-    </DependentProjectIds>
     <Includes>
       <Includes>
-        <Path>/usr/local/include/d/plplot</Path>
-        <Path>..</Path>
-        <Path>/Users/rrau/Desktop/Downloads/scid-master/import</Path>
+        <Path>/usr/local/include/d</Path>
+        <Path>../../..</Path>
+        <Path>/home/rrau/cblas/source</Path>
       </Includes>
     </Includes>
   </PropertyGroup>
@@ -34,7 +28,7 @@
     <Target>Executable</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib /usr/lib/liblapack.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>/home/rrau/numd/Optimization/bin/Debug/libMDOL.a /usr/local/lib/libscid-dmd.a /usr/lib/liblapack.a /home/rrau/cblas/libcblas.a /usr/lib/libopenblas.so.0 /usr/lib/x86_64-linux-gnu/libgfortran.so.3</ExtraLinkerArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
@@ -57,7 +51,7 @@
     <Target>Executable</Target>
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
-    <ExtraLinkerArguments>-framework QtCore -framework QtGui -framework QtSvg /opt/X11/lib/libX11.dylib /usr/local/lib/libqsastime.a /usr/local/lib/libplplotdmdd.a /usr/local/lib/libplplotd.a /usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib /usr/lib/liblapack.dylib</ExtraLinkerArguments>
+    <ExtraLinkerArguments>/usr/local/lib/libscid.a /usr/lib/libc++.dylib /usr/lib/libblas.dylib /usr/lib/liblapack.dylib</ExtraLinkerArguments>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="main.d" />

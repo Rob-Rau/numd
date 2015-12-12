@@ -5,14 +5,21 @@ import LinearAlgebra.Matrix;
 import std.stdio;
 import std.math;
 
-class Vector(size_t l, T = real) : Matrix!(l, 1, T)
+//class Vector(size_t l, T = real) : Matrix!(l, 1, T)
+/*
+struct Vector(size_t l, T = real) : Matrix!(l, 1, T)
 {
 
 	this(in T[l] values...)
 	{
 		super(values);
 	}
-	
+
+	this(in T[] values)
+	{
+		super(values);
+	}
+
 	this()
 	{
 		super();
@@ -23,15 +30,18 @@ class Vector(size_t l, T = real) : Matrix!(l, 1, T)
 		super(vec);
 	}
 
-	Vector!(3) cross(Vector!(3) rhs)
+	static if(l == 3)
 	{
-		auto res = new Vector!(3);
+		Vector!(3) cross(Vector!(3) rhs)
+		{
+			auto res = new Vector!(3);
 
-		res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
-		res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
-		res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+			res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
+			res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
+			res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
 
-		return res;
+			return res;
+		}
 	}
 
 	T dot(Vector rhs)
@@ -83,12 +93,13 @@ unittest
 unittest
 {
 	auto vec1 = new Vector!(3)(1, 2, 3);
+	writeln(vec1.ToString());
 	auto vec2 = new Vector!(3)(4, 5, 6);
-	
+	writeln(vec1.ToString());
 	auto res = vec1.dot(vec2);
 	
 	real expected = 32;
-	
+
 	assert(res == expected, "Vector dot product test failed");
 }
 
@@ -103,3 +114,4 @@ unittest
 	
 	assert(vec3 == expected, "Vector cross product failed");
 }
+*/

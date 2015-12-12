@@ -10,11 +10,11 @@ import std.file;
 import std.math;
 import std.stdio;
 
-import plplot;
+/*import plplot;
 import Plotting.FigPlot;
 import Plotting.Line;
 import Plotting.Color;
-
+*/
 import Optimization.BfgsNewton;
 import Optimization.Complex;
 import Optimization.NewtonRoot;
@@ -23,9 +23,10 @@ import Optimization.Optimizer;
 import Optimization.ParticleSwarmOptimizer;
 import Optimization.SecantRoot;
 
-import scid.bindings.blas.dblas;
-import scid.matrix;
-import scid.linalg;
+import cblas;
+//import scid.bindings.blas.dblas;
+//import scid.matrix;
+//import scid.linalg;
 
 class Drag : ObjectiveFunction
 {
@@ -105,15 +106,25 @@ class Drag : ObjectiveFunction
 	private double e = 0.96;
 }
 
+
 class Rosenbrock : ObjectiveFunction
 {
-	final override Complex!double Compute(Complex!double[] designVar)
+	final override Complex!double Compute(Complex!double[] designVars)
 	{
-		Complex!double sum = 0;
-		for(int i = 0; i < designVar.length-1; i++)
+		Complex!double sum = complex!(double, double)(0, 0);
+
+		for(int i = 0; i < designVars.length-1; i++)
 		{
-			sum += 100*(designVar[i+1] - designVar[i]^^2)^^2 + (1-designVar[i])^^2;
+			sum += 100.0*(designVars[i+1] - designVars[i]^^2.0)^^2.0 + (1.0-designVars[i])^^2.0;
+			//sum += 100.0*(designVar[i+1] - designVar[i]*designVar[i])*(designVar[i+1] - designVar[i]*designVar[i]) + (1.0-designVar[i])*(1.0-designVar[i]);
 		}
+
+		/*
+		foreach(Complex!double designVar; designVars)
+		{
+			sum += 100.0*(designVar - designVar^^2.0)^^2.0 + (1.0-designVar)^^2.0;
+		}
+		*/
 		return sum;
 	}
 	
@@ -214,7 +225,7 @@ void DragMinimize1()
 	bfgs.InitialGuess = [35, 10];
 	
 	writeln();
-	//bfgs.DebugMode = true;
+	bfgs.DebugMode = false;
 	bfgs.ErrorConvergence = true;
 	bfgs.PointFilename = "BfgsDragPoints1.csv";
 	bfgs.ErrorFilename = "BfgsDragError1.csv";
@@ -259,6 +270,7 @@ void DragMinimize2()
 	
 	writeln();
 	writeln("Starting drag optimization. Start point [15, 40]");
+	bfgs.Tolerance = 1.0e-10;
 	bfgs.InitialGuess = [15, 40];
 	
 	writeln();
@@ -306,6 +318,7 @@ void Rosenbrock2()
 	
 	writeln();
 	writeln("Starting 2D Rosenbrock.");
+	bfgs.Tolerance = 1.0e-10;
 	bfgs.InitialGuess = [-1.2, 1.0];
 	
 	writeln();
@@ -352,8 +365,11 @@ void Rosenbrock4()
 	
 	writeln();
 	writeln("Starting 4D Rosenbrock.");
+	//bfgs.DebugMode = true;
+	bfgs.Tolerance = 1.0e-10;
 	bfgs.InitialGuess = [-1.2, 1.0, 1.0, 1.0];
-	
+	//bfgs.ErrorConvergence = true;
+
 	writeln();
 	//bfgs.DebugMode = true;
 	bfgs.PointFilename = "BfgsRose4DPoints.csv";
@@ -416,7 +432,7 @@ void Rosenbrock8()
 	//steepest.DebugMode = true;
 	pso.Particles = 40;
 	//pso.DebugMode = true;
-	pso.Tolerance = 1.0e-6;
+	pso.Tolerance = 1.0e-10;
 	pso.Bounds = [[-10, 10], [-10, 10], [-10, 10], [-10, 10], [-10, 10], [-10, 10], [-10, 10], [-10, 10]];
 	//pso.FileOutput = true;
 	pso.Dimensions = 8;
