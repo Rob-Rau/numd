@@ -35,6 +35,7 @@
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
     <ExtraLinkerArguments>/usr/local/lib/libscid-dmd.a /usr/lib/liblapack.a /home/rrau/cblas/libcblas.a /usr/lib/libcblas.so.3 /usr/lib/x86_64-linux-gnu/libgfortran.so.3</ExtraLinkerArguments>
+    <ExtraCompilerArguments>-vgc</ExtraCompilerArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
@@ -58,7 +59,7 @@
     <Externalconsole>true</Externalconsole>
     <DebugLevel>0</DebugLevel>
     <ExtraLinkerArguments>/home/rrau/cblas/libcblas.a /usr/lib/libopenblas.so.0 /usr/local/lib/libscid-dmd.a /usr/lib/liblapack.a /usr/lib/x86_64-linux-gnu/libgfortran.so.3 /home/rrau/numd/LinearAlgebra/bin/Debug/libLinearAlgebra.a</ExtraLinkerArguments>
-    <ExtraCompilerArguments>-main -gs</ExtraCompilerArguments>
+    <ExtraCompilerArguments>-main -gs -O -inline</ExtraCompilerArguments>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Optimizer.d" />

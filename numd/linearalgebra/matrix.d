@@ -1,10 +1,13 @@
-﻿module LinearAlgebra.Matrix;
+﻿module numd.linearalgebra.matrix;
 
 import std.conv;
 import std.stdio;
 import std.math;
 import std.complex;
 import std.exception;
+import std.experimental.allocator.mallocator;
+
+//alias WriteArrayCSV = Matrix.WriteArrayCSV;
 
 struct Mcomplex(T)
 {
@@ -41,11 +44,16 @@ alias Vector(size_t l, T = real) = Matrix!(l, 1, T);
 struct Matrix(size_t r, size_t c, T = real)
 {
 	alias Matrix!(r, c, T) ThisType;
-	alias mData this;
+	//alias mData this;
 
 	this(in T[r*c] values...)
 	{
+		//import core.stdc.stdlib : malloc; 
+		//mData = cast(T*)malloc(r*c*T.sizeof);
+		//mData.ptr = cast(T*)malloc(r*c*T.sizeof);
+		//mData.length = r*c;
 		mData = new T[r*c];
+		//mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
 		mData[] = values;
 	}
 
@@ -83,24 +91,47 @@ struct Matrix(size_t r, size_t c, T = real)
 		mData[] = mat.mData[];
 	}
 
-	ThisType opBinary(string op, rhsType)(ref Matrix!(r, c, rhsType) rhs)
+	Matrix!(r, ic, rhsType) opBinary(string op, size_t ic, rhsType)(ref Matrix!(r, ic, rhsType) rhs)
 	{
 		//static assert(is (T : rhsType));
 		static if(op == "+" || op == "-")
 		{
+			static assert(ic == c, "Incompatible matricies");
 			auto res = ThisType(0);
 			foreach(size_t i, ref element; res.mData)
 				mixin("element = mData[i] "~op~" rhs.mData[i];");
 			return res;
 		}
-		else static if((op == "*") && (r==c))
+		else static if(op == "*")
 		{
-			auto res = ThisType(0);
+			auto res = Matrix!(r, ic, rhsType)(0);
 			for(int i = 0; i < r; i++)
-				for(int j = 0; j < c; j++)
-					for(int k = 0; k < c; k++)
-						res.mData[i*c + j] += mData[c*i + k]*rhs.mData[k*c + j];
-			
+				for(int j = 0; j < ic; j++)
+					for(int k = 0; k < r; k++)
+						res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+			return res;
+		}
+		else static assert(0, "Operator not implimented");
+	}
+
+	Matrix!(r, ic, rhsType) opBinary(string op, size_t ic, rhsType)(Matrix!(r, ic, rhsType) rhs)
+	{
+		//static assert(is (T : rhsType));
+		static if(op == "+" || op == "-")
+		{
+			static assert(ic == c, "Incompatible matricies");
+			auto res = ThisType(0);
+			foreach(size_t i, ref element; res.mData)
+				mixin("element = mData[i] "~op~" rhs.mData[i];");
+			return res;
+		}
+		else static if(op == "*")
+		{
+			auto res = Matrix!(r, ic, rhsType)(0);
+			for(int i = 0; i < r; i++)
+				for(int j = 0; j < ic; j++)
+					for(int k = 0; k < r; k++)
+						res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
 			return res;
 		}
 		else static assert(0, "Operator not implimented");
@@ -117,6 +148,20 @@ struct Matrix(size_t r, size_t c, T = real)
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
+	}
+
+	void mult(size_t ir, size_t ic, lhsType)(ref Matrix!(ir, ic, lhsType) rhs, ref Matrix!(ir, c, lhsType) output)
+	{
+		static assert(is (T : lhsType));
+		static assert(ic == r, "Incompatible matricies");
+
+		//auto res = Matrix!(ir, c, T)(0);
+		for(int i = 0; i < ir; i++)
+			for(int j = 0; j < c; j++)
+				for(int k = 0; k < ic; k++)
+					output.mData[i*c + j] += mData[ic*i + k]*rhs.mData[k*c + j];
+		
+		//return res;
 	}
 
 	Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(ref Matrix!(ir, ic, lhsType) lhs)
@@ -492,6 +537,12 @@ struct Matrix(size_t r, size_t c, T = real)
 			return res;
 		}
 	}
+
+	T[] getData()
+	{
+		return mData;
+	}
+
 	@property size_t rows() { return mRows; };
 	@property size_t columns() { return mCols; };
 
@@ -500,7 +551,15 @@ package:
 	size_t mCols = c;
 
 	//T[r*c] mData;
-	public T[] mData;// = new T[r*c];
+	private T[] mData;// = new T[r*c];
+}
+
+static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T) x)
+{
+	for(int i = 0; i < x.mData.length-1; i++)
+		f.writef("%40.40f, ", x.mData[i]);
+
+	f.writef("%40.40f\n", x.mData[$-1]);
 }
 
 // opEquals

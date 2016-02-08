@@ -1,0 +1,20 @@
+{
+	"name": "numd",
+	"description": "A numerical computing package for D",
+	"copyright": "Copyright © 2016, Robert F. Rau II",
+	"authors": ["Rob Rau"],
+	"targetType": "library",
+	"sourcePaths": [
+		"numd"
+	],
+	"dependencies": {
+		"cblas": "~>0.1.0",
+		"scid": "~>0.3.0"
+	},
+	"buildTypes": {
+		"unittest": {
+			"buildOptions": ["unittests", "debugMode", "debugInfo"],
+			"dflags": ["-main"]
+		}
+	}
+}

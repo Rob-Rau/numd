@@ -1,6 +1,6 @@
-﻿module LinearAlgebra.Vector;
+﻿module numd.linearalgebra.Vector;
 
-import LinearAlgebra.Matrix;
+import numd.linearalgebra.matrix;
 
 import std.stdio;
 import std.math;
