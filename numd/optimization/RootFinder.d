@@ -1,4 +1,4 @@
-module Optimization.RootFinder;
+module numd.optimization.RootFinder;
 
 import std.complex;
 

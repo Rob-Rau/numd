@@ -1,4 +1,4 @@
-module Optimization.Gradient;
+module numd.optimization.Gradient;
 
 interface IGradient
 {

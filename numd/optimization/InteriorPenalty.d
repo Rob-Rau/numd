@@ -1,12 +1,12 @@
-﻿module Optimization.InteriorPenalty;
+﻿module numd.optimization.InteriorPenalty;
 
-import Optimization.ArrayOps;
-import Optimization.BfgsNewton;
-import Optimization.BracketAndZoom;
-import Optimization.Complex;
-import Optimization.MatrixOps;
-import Optimization.ObjectiveFunction;
-import Optimization.Optimizer;
+import numd.optimization.ArrayOps;
+import numd.optimization.BfgsNewton;
+import numd.optimization.BracketAndZoom;
+import numd.optimization.Complex;
+import numd.optimization.MatrixOps;
+import numd.optimization.ObjectiveFunction;
+import numd.optimization.Optimizer;
 
 import core.thread;
 

@@ -1,10 +1,10 @@
-﻿module Optimization.BfgsNewton;
+﻿module numd.optimization.BfgsNewton;
 
-import Optimization.ArrayOps;
-import Optimization.BracketAndZoom;
-import Optimization.MatrixOps;
-import Optimization.ObjectiveFunction;
-import Optimization.Optimizer;
+import numd.optimization.ArrayOps;
+import numd.optimization.BracketAndZoom;
+import numd.optimization.MatrixOps;
+import numd.optimization.ObjectiveFunction;
+import numd.optimization.Optimizer;
 
 import numd.linearalgebra.matrix;
 
@@ -240,7 +240,7 @@ class BfgsNewton(size_t dims) : Optimizer
 version(unittest)
 {
 	import core.memory;
-	import Optimization.SecantRoot;
+	import numd.optimization.SecantRoot;
 	import std.math;
 	import std.complex;
 

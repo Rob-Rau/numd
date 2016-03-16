@@ -1,12 +1,12 @@
-﻿module Optimization.SQP;
+﻿module numd.optimization.SQP;
 
-import Optimization.ArrayOps;
-import Optimization.BracketAndZoom;
-import Optimization.Complex;
-import Optimization.InteriorPenalty;
-import Optimization.MatrixOps;
-import Optimization.ObjectiveFunction;
-import Optimization.Optimizer;
+import numd.optimization.ArrayOps;
+import numd.optimization.BracketAndZoom;
+import numd.optimization.Complex;
+import numd.optimization.InteriorPenalty;
+import numd.optimization.MatrixOps;
+import numd.optimization.ObjectiveFunction;
+import numd.optimization.Optimizer;
 
 import core.thread;
 

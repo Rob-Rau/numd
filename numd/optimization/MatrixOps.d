@@ -1,4 +1,4 @@
-﻿module Optimization.MatrixOps;
+﻿module numd.optimization.MatrixOps;
 
 import std.stdio;
 

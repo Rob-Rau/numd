@@ -1,4 +1,4 @@
-﻿module Optimization.Complex;
+﻿module numd.optimization.Complex;
 
 import std.complex;
 import std.math;

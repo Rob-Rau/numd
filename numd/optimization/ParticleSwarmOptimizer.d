@@ -1,10 +1,10 @@
-﻿module Optimization.ParticleSwarmOptimizer;
+﻿module numd.optimization.ParticleSwarmOptimizer;
 
-import Optimization.ArrayOps;
-import Optimization.Complex;
-import Optimization.Optimizer;
-import Optimization.ObjectiveFunction;
-import Optimization.BracketAndZoom;
+import numd.optimization.ArrayOps;
+import numd.optimization.Complex;
+import numd.optimization.Optimizer;
+import numd.optimization.ObjectiveFunction;
+import numd.optimization.BracketAndZoom;
 
 import core.thread;
 

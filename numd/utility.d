@@ -1,14 +1,14 @@
 module numd.utility;
 
-struct Meshgrid
+struct Meshgrid(T = double)
 {
-	real[][] X;
-	real[][] Y;
+	T[][] X;
+	T[][] Y;
 }
 
-Meshgrid meshgrid(real[] x, real[] y)
+Meshgrid meshgrid(T = double)(T[] x, T[] y)
 {
-	Meshgrid mesh = {X: new real[][](y.length, x.length), Y: new real[][](y.length, x.length)};
+	Meshgrid mesh = {X: new T[][](y.length, x.length), Y: new T[][](y.length, x.length)};
 
 	for(int i = 0; i < y.length; i++)
 		for(int j = 0; j < x.length; j++)
@@ -21,10 +21,11 @@ Meshgrid meshgrid(real[] x, real[] y)
 	return mesh;
 }
 
-real[] linspace(real start, real end, int points)
+T[] linspace(T = double)(double start, double end, int points)
 {
-	real h = (end-start)/(points-1);
-	real[] x = new real[points];
+	//real h = (end-start)/(points-1);
+	T h = (end-start)/(points);
+	T[] x = new T[points];
 	x[0] = start;
 	for(int i = 1; i < points; i++)
 	{

@@ -5,7 +5,6 @@ import std.stdio;
 import std.math;
 import std.complex;
 import std.exception;
-import std.experimental.allocator.mallocator;
 
 //alias WriteArrayCSV = Matrix.WriteArrayCSV;
 
@@ -38,57 +37,121 @@ struct Mcomplex(T)
 	}
 }
 
-alias Vector(size_t l, T = real) = Matrix!(l, 1, T);
+alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
-//class Matrix(size_t r, size_t c, T = real)
-struct Matrix(size_t r, size_t c, T = real)
+struct Matrix(size_t r, size_t c, T = double)
 {
-	alias Matrix!(r, c, T) ThisType;
+	import std.experimental.allocator.mallocator;
+
+	alias ThisType = Matrix!(r, c, T);
 	//alias mData this;
 
-	this(in T[r*c] values...)
+@nogc
+{
+	private int* referenceCount = null;
+	
+	this(const T[r*c] values)
 	{
-		//import core.stdc.stdlib : malloc; 
-		//mData = cast(T*)malloc(r*c*T.sizeof);
-		//mData.ptr = cast(T*)malloc(r*c*T.sizeof);
-		//mData.length = r*c;
-		mData = new T[r*c];
-		//mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+		//printf("copy ctor3\n");
+		mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
+		(*referenceCount) = 1;
 		mData[] = values;
 	}
 
-	this(in T[] values)
+	this(immutable T[r*c] values...)
 	{
-		mData = new T[r*c];
-		mData[] = values[];
+		//printf("copy ctor2\n");
+		mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
+		(*referenceCount) = 1;
+		mData[] = values;
 	}
 
-	this(real init)
+	this(const T[] values)
 	{
-		static if(is(T : Mcomplex!real))
+		if(referenceCount is null)
 		{
-			mData = new T[r*c];
-			mData[] = Mcomplex!real(Complex!real(init));
+			//printf("copy ctor1\n");
+			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+			mData[] = values[];
+
+			referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
+			(*referenceCount) = 1;
 		}
 		else
 		{
-			mData = new T[r*c];
+			mData[] = values[];
+		}
+	}
+	/+
+	this(ref T[] data)
+	{
+		printf("ref ctor\n");
+		mData = data;
+		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
+		(*referenceCount) = 0;
+	}+/
+	
+	this(double init)
+	{
+		//printf("init ctor\n");
+		static if(is(T : Mcomplex!double))
+		{
+			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+			mData[] = Mcomplex!double(Complex!double(init));
+		}
+		else
+		{
+			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
 			mData[] = init;
+		}
+
+		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
+		(*referenceCount) = 1;
+	}
+
+	this(this)
+	{
+		if(referenceCount !is null)
+		{
+			//printf("in postblit\n");
+			(*referenceCount)++;
+		}
+		else
+		{
+			printf("Error Matrix referenceCount somehow null in postblit\n");
 		}
 	}
 
-	this(const ThisType mat)
+	~this()
 	{
-		writeln("In copy ctor 1");
-		mData = new T[r*c];
-		mData[] = mat.mData[];
-	}
-
-	this(ref const ThisType mat)
-	{
-		writeln("In copy ctor 2");
-		mData = new T[r*c];
-		mData[] = mat.mData[];
+		if(referenceCount !is null)
+		{
+			if((*referenceCount) == 1)
+			{
+				if(mData !is null)
+				{
+					///printf("dealloc\n");
+					Mallocator.instance.deallocate(mData);
+					mData = null;
+				}
+				Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
+			}
+			else if((*referenceCount) > 1)
+			{
+				//printf("de ref\n");
+				(*referenceCount)--;
+			}
+			else if((*referenceCount) == 0)
+			{
+				Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
+			}
+		}
+		else
+		{
+			printf("Error Matrix referenceCount somehow null in destructor\n");
+		}
 	}
 
 	Matrix!(r, ic, rhsType) opBinary(string op, size_t ic, rhsType)(ref Matrix!(r, ic, rhsType) rhs)
@@ -137,7 +200,7 @@ struct Matrix(size_t r, size_t c, T = real)
 		else static assert(0, "Operator not implimented");
 	}
 
-	ThisType opBinary(string op)(real rhs)
+	ThisType opBinary(string op)(double rhs)
 	{
 		static if(op == "*" || op == "/")
 		{
@@ -187,7 +250,7 @@ struct Matrix(size_t r, size_t c, T = real)
 		else static assert(0, "Operator not implemented");
 	}
 
-	ThisType opBinaryRight(string op)(real lhs)
+	ThisType opBinaryRight(string op)(double lhs)
 	{
 		static if(op == "*" || op == "/")
 		{
@@ -200,28 +263,11 @@ struct Matrix(size_t r, size_t c, T = real)
 		else static assert(0, "Operator not implemented");
 	}
 
-	//override bool opEquals(Object o)
 	bool opEquals(ref ThisType o)
 	{
-		//if(typeid(this) != typeid(o)) return false;
-
-		ThisType rhs = cast(ThisType)o;
 		for(int i = 0; i < r*c; i++)
 		{
-			if(mData[i] != rhs.mData[i])
-				return false;
-		}
-		return true;
-	}
-
-	bool opEquals(ThisType o)
-	{
-		//if(typeid(this) != typeid(o)) return false;
-		
-		ThisType rhs = cast(ThisType)o;
-		for(int i = 0; i < r*c; i++)
-		{
-			if(mData[i] != rhs.mData[i])
+			if(mData[i] != o.mData[i])
 				return false;
 		}
 		return true;
@@ -418,57 +464,64 @@ struct Matrix(size_t r, size_t c, T = real)
 				}
 			}
 
-			enforce(rref == ThisType.Identity(), "Matrix not invertible");
+			//enforce(rref == ThisType.Identity(), "Matrix not invertible");
 
 			return inv;
 		}
 	}
-
-	string ToString()
-	{
-		string matStr;
-		
-		for(int i = 0; i < r; i++)
-		{
-			matStr ~= "[";
-			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ to!string(mData[i*c + j]);
-			
-			matStr ~= " ]\n";
-		}
-		return matStr;
-	}
-
+/+
 	void swap(ref ThisType rhs)
 	{
 		auto tmp = mData;
 		mData = rhs.mData;
 		rhs.mData = tmp;
 	}
-
-	/*
-		ref S opAssign(ref const S s)
++/
+	/+
+	ref S opAssign(ref const S s)
 	{
 		a = s.a;
 		return this;
-	}*/
-
+	}
+	+/
+/+
 	ref ThisType opAssign(ref const ThisType rhs)
 	{
+		printf("In opAssign 1\n");
 		//writeln("In opAssign 1");
 		mData[] = rhs.mData[];
 		return this;
 	}
+	+/
 
-	ref ThisType opAssign(const ThisType rhs)
+	ref ThisType opAssign(ThisType rhs)
 	{
-		//writeln("In opAssign 2");
-		mData[] = rhs.mData[];
+		if(referenceCount is null)
+		{
+			//printf("In opAssign 2_1\n");
+			referenceCount = rhs.referenceCount;
+			(*referenceCount)++;
+			mData = rhs.mData;
+		}
+		else
+		{
+			//printf("In opAssign 2_2\n");
+			//writeln("In opAssign 2");
+			mData[] = rhs.mData[];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(const T[r*c] rhs)
+	{
+		//printf("In opAssign 3\n");
+		mData[] = rhs[];
 		return this;
 	}
 
 	ref ThisType opAssign(const T[] rhs)
 	{
+		//printf("In opAssign 3\n");
 		mData[] = rhs[];
 		return this;
 	}
@@ -546,14 +599,30 @@ struct Matrix(size_t r, size_t c, T = real)
 	@property size_t rows() { return mRows; };
 	@property size_t columns() { return mCols; };
 
+	T[] mData;
+}
+	string ToString()
+	{
+		string matStr;
+		
+		for(int i = 0; i < r; i++)
+		{
+			matStr ~= "[";
+			for(int j = 0; j < c; j++)
+				matStr ~= " " ~ to!string(mData[i*c + j]);
+			
+			matStr ~= " ]\n";
+		}
+		return matStr;
+	}
 package:
 	size_t mRows = r;
 	size_t mCols = c;
 
 	//T[r*c] mData;
-	private T[] mData;// = new T[r*c];
+	// = new T[r*c];
 }
-
+/+
 static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T) x)
 {
 	for(int i = 0; i < x.mData.length-1; i++)
@@ -561,7 +630,7 @@ static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T
 
 	f.writef("%40.40f\n", x.mData[$-1]);
 }
-
++/
 // opEquals
 unittest
 {
@@ -680,7 +749,7 @@ unittest
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
 		5, 6);
-	real scalar = 2;
+	double scalar = 2;
 	
 	auto m3 = scalar*m1;
 	
@@ -698,7 +767,7 @@ unittest
 		6, 8,
 		10, 12);
 	
-	real scalar = 2;
+	double scalar = 2;
 	
 	auto m2 = m1/2;
 	
@@ -816,14 +885,14 @@ unittest
 	-0.1000    0.2000        0
 	0.5000         0         0
 	*/
-	auto expected5 = Matrix!(3, 6, real)(1, 0, 0, -1.0/30.0, -1.0/10.0, 1.0/6.0, 0, 1, 0, -1.0/10.0, 1.0/5.0, 0, 0, 0, 1.0, 1.0/2.0, 0, 0);
+	auto expected5 = Matrix!(3, 6)(1, 0, 0, -1.0/30.0, -1.0/10.0, 1.0/6.0, 0, 1, 0, -1.0/10.0, 1.0/5.0, 0, 0, 0, 1.0, 1.0/2.0, 0, 0);
 	//writeln(expected5.ToString());
 	assert(m10 == expected5, "Matrix rref test failed");
 }
 
 unittest
 {
-	auto m1 = Matrix!(3, 3, Mcomplex!real)();
+	auto m1 = Matrix!(3, 3, Mcomplex!double)();
 }
 
 unittest
@@ -849,6 +918,7 @@ unittest
 
 unittest
 {
+	/+
 	auto m1 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
 	auto m2 = Matrix!(3, 3)(0, 1, 2, 0, 5, 1, 4, 3, 1);
 
@@ -858,14 +928,14 @@ unittest
 	assert(m2.mData[1] == 0, "Matrix swap failed");
 	assert(m1.mData[6] == 4, "Matrix swap failed");
 	assert(m2.mData[6] == 6, "Matrix swap failed");
-
+	+/
 }
 
 unittest
 {
 	auto vec = Vector!(3)(1.0, 1.0, 0.0);
 	auto mag = vec.magnitude();
-	auto expected = sqrt(cast(real)2);
+	auto expected = sqrt(cast(double)2);
 	
 	assert(mag == expected, "Vector magnitude test failed");
 }
@@ -887,7 +957,7 @@ unittest
 	//writeln(vec1.ToString());
 	auto res = vec1.dot(vec2);
 	
-	real expected = 32;
+	double expected = 32;
 	
 	assert(res == expected, "Vector dot product test failed");
 }

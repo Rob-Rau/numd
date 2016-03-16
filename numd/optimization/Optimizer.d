@@ -1,7 +1,7 @@
-module Optimization.Optimizer;
+module numd.optimization.Optimizer;
 
 import core.time;
-import Optimization.ObjectiveFunction;
+import numd.optimization.ObjectiveFunction;
 import std.complex;
 import std.math;
 import std.stdio;

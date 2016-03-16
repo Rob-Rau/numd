@@ -1,13 +1,13 @@
-module Optimization.ObjectiveFunction;
+module numd.optimization.ObjectiveFunction;
 
 import std.complex;
 import std.math;
 import std.stdio;
 
-import Optimization.Gradient;
-import Optimization.Derivative;
-import Optimization.ComplexStep;
-import Optimization.FiniteDifference;
+import numd.optimization.Gradient;
+import numd.optimization.Derivative;
+import numd.optimization.ComplexStep;
+import numd.optimization.FiniteDifference;
 
 abstract class ObjectiveFunction : IGradient
 {

@@ -1,8 +1,8 @@
-module Optimization.Derivative;
+module numd.optimization.Derivative;
 
 import std.complex;
 
-import Optimization.ObjectiveFunction;
+import numd.optimization.ObjectiveFunction;
 
 alias Complex!double delegate(Complex!double[] input) DerivativeEquation;
 

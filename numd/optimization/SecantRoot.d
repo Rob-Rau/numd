@@ -1,10 +1,10 @@
-module Optimization.SecantRoot;
+module numd.optimization.SecantRoot;
 
 import std.complex;
 import std.math;
 import std.stdio;
 
-import Optimization.RootFinder;
+import numd.optimization.RootFinder;
 
 class SecantRoot : RootFinder
 {

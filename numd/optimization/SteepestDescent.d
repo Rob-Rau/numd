@@ -1,9 +1,9 @@
-﻿module Optimization.SteepestDescent;
+﻿module numd.optimization.SteepestDescent;
 
-import Optimization.ArrayOps;
-import Optimization.Optimizer;
-import Optimization.ObjectiveFunction;
-import Optimization.BracketAndZoom;
+import numd.optimization.ArrayOps;
+import numd.optimization.Optimizer;
+import numd.optimization.ObjectiveFunction;
+import numd.optimization.BracketAndZoom;
 
 import core.thread;
 

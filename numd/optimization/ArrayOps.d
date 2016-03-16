@@ -1,4 +1,4 @@
-module Optimization.ArrayOps;
+module numd.optimization.ArrayOps;
 
 import std.complex;
 import std.math;

@@ -1,10 +1,10 @@
-module Optimization.FiniteDifference;
+module numd.optimization.FiniteDifference;
 
 import std.complex;
 import std.stdio;
 
-import Optimization.Derivative;
-import Optimization.ObjectiveFunction;
+import numd.optimization.Derivative;
+import numd.optimization.ObjectiveFunction;
 
 class FiniteDifference : Derivative
 {

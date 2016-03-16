@@ -1,8 +1,8 @@
-module Optimization.BracketAndZoom;
+module numd.optimization.BracketAndZoom;
 
-import Optimization.Optimizer;
-import Optimization.ArrayOps;
-import Optimization.ObjectiveFunction;
+import numd.optimization.Optimizer;
+import numd.optimization.ArrayOps;
+import numd.optimization.ObjectiveFunction;
 
 import core.thread;
 import std.array;

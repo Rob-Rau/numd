@@ -1,10 +1,10 @@
-module Optimization.NewtonRoot;
+module numd.optimization.NewtonRoot;
 
 import std.complex;
 import std.math;
 import std.stdio;
 
-import Optimization.RootFinder;
+import numd.optimization.RootFinder;
 
 class NewtonRoot : RootFinder
 {
