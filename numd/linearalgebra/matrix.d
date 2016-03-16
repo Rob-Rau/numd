@@ -603,13 +603,14 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 	string ToString()
 	{
+		import std.string;
 		string matStr;
 		
 		for(int i = 0; i < r; i++)
 		{
 			matStr ~= "[";
 			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ to!string(mData[i*c + j]);
+				matStr ~= " " ~ to!string(mData[i*c + j]).rightJustify(3, ' ');
 			
 			matStr ~= " ]\n";
 		}
