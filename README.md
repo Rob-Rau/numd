@@ -19,17 +19,17 @@ with D's mathematics and numerical method library support (sorry scid). I wanted
 - Check out [RPP](https://github.com/Rob-Rau/rpp) ~~Plotting (current lame implementation is based off plplot, want to roll my own)~~
 
 ## TODO:
-1) ~~Make it easy to build and use.~~
+- ~~Make it easy to build and use.~~
 	- ~~Fix absolute path dependancies~~
 	- ~~Set up Cmake or some other build system~~
 	- I'm using dub now
-2) Write some unit regression tests
+- Write some unit regression tests
 	- This is in preperation for TODO 5
-3) Write basic matrix library
+- Write basic matrix library
 	- Basic matrix object and ops (addition, multiplication, inverse)
-4) Clean up optimization library to use the new matrix library.m 
+- Clean up optimization library to use the new matrix library.m 
 	- Replace blas matrix function with new shiny objects.
-5) Start implementing the above list in no particular order.
+- Start implementing the above list in no particular order.
 	- With the rest in place this shouldn't be to hard....lol
 
 ## Dependencies:
