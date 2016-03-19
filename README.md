@@ -1,14 +1,14 @@
 # Numd
 
 ## Intro
-Numd is my attempt at a numerical methods library written in the [D Programming language](http://www.dlang.org).
+Numd is my attempt at a numerical methods library written in the [D Programming language](https://dlang.org).
 So far it contains a number of optimization algorithms (that desperatly need to be refactored), a handful of diferentiation
 methods, one integrator and a currently evolving linear algebra package.
 
 I started this project for a class I took during my undergrad. The class itself was
 focused on optimization methods, which I implemented in D, but as I went I was displeased
 with D's mathematics and numerical method library support (sorry scid). I wanted a more 
-~~object oriented~~ TEMPLATES!! approach so I decided to write my own, based off what I had done for class.
+~~object oriented~~ TEMPLATES!! (or whatever I feel appropriate) approach so I decided to write my own, based off what I had done for class.
 
 ## Things planned at this point:
 - More differentiation (2nd order, 3rd order, cental, left, right, ...)
@@ -27,7 +27,7 @@ with D's mathematics and numerical method library support (sorry scid). I wanted
 	- This is in preperation for TODO 5
 - Write basic matrix library
 	- Basic matrix object and ops (addition, multiplication, inverse)
-- Clean up optimization library to use the new matrix library.m 
+- Clean up optimization library to use the new matrix library
 	- Replace blas matrix function with new shiny objects.
 - Start implementing the above list in no particular order.
 	- With the rest in place this shouldn't be to hard....lol
