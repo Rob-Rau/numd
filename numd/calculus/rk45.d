@@ -46,27 +46,49 @@ unittest
 	auto k4 = vec(0);
 	auto x = vec(0);
 
+	auto tmp = vec(0);
+
 	for(int i = 0; i < (points - 1); i++)
 	{
 		x.mData[] = results.X[i];
 
 		func(k1, results.T[i], x, args);
-		k1 *= timestep;
+		//k1 *= timestep;
 		//k1 = timestep*func(results.T[i], x);
 
+		tmp = x + (timestep/2.0)*k1;
 		//k2 = timestep*func(results.T[i] + timestep/2, x + k1/2);
+		func(k2, results.T[i] + timestep/2.0, tmp, args);
+		//k2 *= timestep;
+
+		tmp = x + (timestep/2.0)*k2;
+		//k3 = timestep*func(results.T[i] + timestep/2, x + k2/2);
+		func(k3, results.T[i] + timestep/2.0, tmp, args);
+		//k3 *= timestep;
+
+		tmp = x + timestep*k3;
+		//k4 = timestep*func(results.T[i] + timestep, x + k3);
+		func(k4, results.T[i] + timestep, tmp, args);
+		//k4 *= timestep;
+
+		tmp = x + (timestep/6.0)*(k2 + 2*k2 + 2*k3 + k4);
+		results.X[i+1][] = tmp.mData;
+
+/+
+		func(k1, results.T[i], x, args);
+		k1 *= timestep;
+
 		func(k2, results.T[i] + timestep/2, x + k1/2, args);
 		k2 *= timestep;
 
-		//k3 = timestep*func(results.T[i] + timestep/2, x + k2/2);
 		func(k3, results.T[i] + timestep/2, x + k2/2, args);
 		k3 *= timestep;
 
-		//k4 = timestep*func(results.T[i] + timestep, x + k3);
 		func(k4, results.T[i] + timestep, x + k3, args);
 		k4 *= timestep;
 
 		results.X[i+1][] = (x + k2/6 + (k2 + k3)/3 + k4/6).mData;
++/
 		//printf("step\n");
 	}
 

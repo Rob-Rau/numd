@@ -3,6 +3,7 @@
 import std.conv;
 import std.stdio;
 import std.math;
+import std.meta;
 import std.complex;
 import std.exception;
 
@@ -39,9 +40,10 @@ struct Mcomplex(T)
 
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
-struct Matrix(size_t r, size_t c, T = double)
+struct Matrix(size_t r, size_t c, T = double, operations...)
 {
 	import std.experimental.allocator.mallocator;
+	alias ops = AliasSeq!operations;
 
 	alias ThisType = Matrix!(r, c, T);
 	//alias mData this;
@@ -49,6 +51,7 @@ struct Matrix(size_t r, size_t c, T = double)
 @nogc
 {
 	private int* referenceCount = null;
+	
 	
 	this(const T[r*c] values)
 	{
@@ -132,7 +135,7 @@ struct Matrix(size_t r, size_t c, T = double)
 			{
 				if(mData !is null)
 				{
-					///printf("dealloc\n");
+					//printf("dealloc\n");
 					Mallocator.instance.deallocate(mData);
 					mData = null;
 				}
@@ -152,6 +155,26 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			printf("Error Matrix referenceCount somehow null in destructor\n");
 		}
+	}
+
+	ref T opIndex(size_t index)
+	{
+		return mData[index];
+	}
+
+	T[] opIndex()
+	{
+		return mData[];
+	}
+
+	size_t opDollar(size_t pos)()
+	{
+		return mData.length;
+	}
+
+	T[] opSlice(size_t a, size_t b)
+	{
+		return mData[a..b];
 	}
 
 	Matrix!(r, ic, rhsType) opBinary(string op, size_t ic, rhsType)(ref Matrix!(r, ic, rhsType) rhs)
@@ -623,7 +646,7 @@ package:
 	//T[r*c] mData;
 	// = new T[r*c];
 }
-/+
+
 static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T) x)
 {
 	for(int i = 0; i < x.mData.length-1; i++)
@@ -631,7 +654,7 @@ static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T
 
 	f.writef("%40.40f\n", x.mData[$-1]);
 }
-+/
+
 // opEquals
 unittest
 {
