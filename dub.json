@@ -14,7 +14,7 @@
 	},
 	"buildTypes": {
 		"unittest": {
-			"buildOptions": ["unittests", "debugMode", "debugInfo"],
+			"buildOptions": ["unittests", "debugMode", "debugInfo"]
 		}
 	}
 }

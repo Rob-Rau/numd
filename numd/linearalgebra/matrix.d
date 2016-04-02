@@ -7,6 +7,8 @@ import std.meta;
 import std.complex;
 import std.exception;
 
+import scid.bindings.lapack.dlapack;
+
 //alias WriteArrayCSV = Matrix.WriteArrayCSV;
 
 struct Mcomplex(T)
@@ -52,22 +54,69 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 {
 	private int* referenceCount = null;
 	
+	// if matrix is small enough, stack allocate it.
+	static if(r*c*T.sizeof > 127)
+	{
+		T[] mData;
+		
+		private void allocData()
+		{
+			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+			referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
+			(*referenceCount) = 1;
+		}
+		
+		~this()
+		{
+			if(referenceCount !is null)
+			{
+				if((*referenceCount) == 1)
+				{
+					if(mData !is null)
+					{
+						//printf("dealloc\n");
+						Mallocator.instance.deallocate(mData);
+						mData = null;
+					}
+					Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
+				}
+				else if((*referenceCount) > 1)
+				{
+					//printf("de ref\n");
+					(*referenceCount)--;
+				}
+				else if((*referenceCount) == 0)
+				{
+					Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
+				}
+			}
+			else
+			{
+				//printf("Error Matrix referenceCount somehow null in destructor\n");
+			}
+		}
+	}
+	else
+	{
+		T[r*c] mData;
+		
+		private void allocData()
+		{
+
+		}
+	}
 	
 	this(const T[r*c] values)
 	{
 		//printf("copy ctor3\n");
-		mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
-		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
-		(*referenceCount) = 1;
+		allocData();
 		mData[] = values;
 	}
 
 	this(immutable T[r*c] values...)
 	{
 		//printf("copy ctor2\n");
-		mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
-		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
-		(*referenceCount) = 1;
+		allocData();
 		mData[] = values;
 	}
 
@@ -76,11 +125,8 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 		if(referenceCount is null)
 		{
 			//printf("copy ctor1\n");
-			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
+			allocData();
 			mData[] = values[];
-
-			referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
-			(*referenceCount) = 1;
 		}
 		else
 		{
@@ -99,19 +145,15 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 	this(double init)
 	{
 		//printf("init ctor\n");
+		allocData();
 		static if(is(T : Mcomplex!double))
 		{
-			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
 			mData[] = Mcomplex!double(Complex!double(init));
 		}
 		else
 		{
-			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
 			mData[] = init;
 		}
-
-		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
-		(*referenceCount) = 1;
 	}
 
 	this(this)
@@ -123,37 +165,7 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 		}
 		else
 		{
-			printf("Error Matrix referenceCount somehow null in postblit\n");
-		}
-	}
-
-	~this()
-	{
-		if(referenceCount !is null)
-		{
-			if((*referenceCount) == 1)
-			{
-				if(mData !is null)
-				{
-					//printf("dealloc\n");
-					Mallocator.instance.deallocate(mData);
-					mData = null;
-				}
-				Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
-			}
-			else if((*referenceCount) > 1)
-			{
-				//printf("de ref\n");
-				(*referenceCount)--;
-			}
-			else if((*referenceCount) == 0)
-			{
-				Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
-			}
-		}
-		else
-		{
-			printf("Error Matrix referenceCount somehow null in destructor\n");
+			//printf("Error Matrix referenceCount somehow null in postblit\n");
 		}
 	}
 
@@ -519,7 +531,7 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 
 	ref ThisType opAssign(ThisType rhs)
 	{
-		if(referenceCount is null)
+		if((referenceCount is null) && (rhs.referenceCount !is null))
 		{
 			//printf("In opAssign 2_1\n");
 			referenceCount = rhs.referenceCount;
@@ -549,6 +561,12 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 		return this;
 	}
 
+	ref ThisType opAssign(const T val)
+	{
+		mData[] = val;
+		return this;
+	}
+	
 	void opOpAssign(string op)(T rhs)
 	{
 		static assert((op == "*") || (op == "/"), "operator not implimented");
@@ -621,8 +639,6 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 
 	@property size_t rows() { return mRows; };
 	@property size_t columns() { return mCols; };
-
-	T[] mData;
 }
 	string ToString()
 	{
