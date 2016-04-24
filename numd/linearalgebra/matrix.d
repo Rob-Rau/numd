@@ -55,7 +55,7 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 	private int* referenceCount = null;
 	
 	// if matrix is small enough, stack allocate it.
-	static if(r*c*T.sizeof > 127)
+	static if(r*c*T.sizeof > 128)
 	{
 		T[] mData;
 		
