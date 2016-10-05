@@ -55,7 +55,7 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 	private int* referenceCount = null;
 	
 	// if matrix is small enough, stack allocate it.
-	static if(r*c*T.sizeof > 128)
+	static if(r*c*T.sizeof > 512)
 	{
 		T[] mData;
 		
@@ -106,7 +106,7 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 		}
 	}
 	
-	this(const T[r*c] values)
+	this(T[r*c] values)
 	{
 		//printf("copy ctor3\n");
 		allocData();
@@ -174,6 +174,12 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 		return mData[index];
 	}
 
+	ref T opIndex(size_t row, size_t col)
+	{
+		size_t idx = row*c + col;
+		return mData[idx];
+	}
+	
 	T[] opIndex()
 	{
 		return mData[];
@@ -603,7 +609,7 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 			}
 		}
 		
-		T dot(ThisType rhs)
+		T dot(S)(S rhs)
 		{
 			assert(rows == rhs.rows);
 			T res = 0;

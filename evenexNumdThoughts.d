@@ -59,8 +59,29 @@ unittest
 	Matrix!(2, 2) mat7 = mat1*mat2*vec1 + mat3*vec2; 
 }
 
+import std.functional;
+import std.typecons;
+import std.meta;
+//Tuple!(fwd()()) func(Args...)(auto ref Args args)
+auto func(Args...)(auto ref Args args)
+{
+	static int x;
+	return tuple(forward!(x, args));
+}
+
+void func2(T)(lazy T exp)
+{
+	alias arg = AliasSeq!(exp().expand);
+	pragma(msg, arg);
+	foreach(type; arg)
+	{
+		pragma(msg, "type: "~type);
+	}
+}
+
 unittest
 {
+	func2(func(1));
 	alias header = TestHeader!("Function pass test");
 	auto mat1 = Matrix!(2, 2)(0);
 	Vector!2 vec1;
