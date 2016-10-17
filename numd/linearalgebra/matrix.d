@@ -42,10 +42,11 @@ struct Mcomplex(T)
 
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
-struct Matrix(size_t r, size_t c, T = double, operations...)
+//struct Matrix(size_t r, size_t c, T = double, operations...)
+struct Matrix(size_t r, size_t c, T = double)
 {
 	import std.experimental.allocator.mallocator;
-	alias ops = AliasSeq!operations;
+	//alias ops = AliasSeq!operations;
 
 	alias ThisType = Matrix!(r, c, T);
 	//alias mData this;
@@ -295,10 +296,15 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 	{
 		static if(op == "*" || op == "/")
 		{
+			/+
 			auto res = ThisType(0);
 			foreach(size_t i, element; mData)
 				mixin("res.mData[i] = lhs"~op~"element;");
 			
+			return res;
+			+/
+			auto res = ThisType(0);
+			res.mData[] = lhs*mData[];
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
@@ -535,22 +541,25 @@ struct Matrix(size_t r, size_t c, T = double, operations...)
 	}
 	+/
 
-	ref ThisType opAssign(ThisType rhs)
+	static if(r*c*T.sizeof > 512)
 	{
-		if((referenceCount is null) && (rhs.referenceCount !is null))
+		ref ThisType opAssign(ThisType rhs)
 		{
-			//printf("In opAssign 2_1\n");
-			referenceCount = rhs.referenceCount;
-			(*referenceCount)++;
-			mData = rhs.mData;
+			if((referenceCount is null) && (rhs.referenceCount !is null))
+			{
+				//printf("In opAssign 2_1\n");
+				referenceCount = rhs.referenceCount;
+				(*referenceCount)++;
+				mData = rhs.mData;
+			}
+			else
+			{
+				//printf("In opAssign 2_2\n");
+				//writeln("In opAssign 2");
+				mData[] = rhs.mData[];
+			}
+			return this;
 		}
-		else
-		{
-			//printf("In opAssign 2_2\n");
-			//writeln("In opAssign 2");
-			mData[] = rhs.mData[];
-		}
-		return this;
 	}
 
 	ref ThisType opAssign(const T[r*c] rhs)

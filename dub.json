@@ -3,7 +3,7 @@
 	"description": "A numerical computing package for D",
 	"copyright": "Copyright © 2016, Robert F. Rau II",
 	"authors": ["Rob Rau"],
-	"targetType": "library",
+	"targetType": "sourceLibrary",
 	"sourcePaths": [
 		"numd"
 	],
@@ -15,6 +15,14 @@
 	"buildTypes": {
 		"unittest": {
 			"buildOptions": ["unittests", "debugMode", "debugInfo"]
+		},
+		"ldc-release": {
+			"buildOptions": ["releaseMode", "inline"],
+			"dflags": ["-O5"]
+		},
+		"ldc-release-prof": {
+			"buildOptions": ["releaseMode", "inline", "debugInfo"],
+			"dflags": ["-O5"]
 		}
 	}
 }
