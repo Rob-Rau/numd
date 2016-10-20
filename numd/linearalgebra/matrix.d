@@ -202,9 +202,14 @@ struct Matrix(size_t r, size_t c, T = double)
 		static if(op == "+" || op == "-")
 		{
 			static assert(ic == c, "Incompatible matricies");
+			/+
 			auto res = ThisType(0);
 			foreach(size_t i, ref element; res.mData)
 				mixin("element = mData[i] "~op~" rhs.mData[i];");
+			return res;
+			+/
+			auto res = ThisType(0);
+			mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
 			return res;
 		}
 		else static if(op == "*")
@@ -225,9 +230,14 @@ struct Matrix(size_t r, size_t c, T = double)
 		static if(op == "+" || op == "-")
 		{
 			static assert(ic == c, "Incompatible matricies");
+			/+
 			auto res = ThisType(0);
 			foreach(size_t i, ref element; res.mData)
 				mixin("element = mData[i] "~op~" rhs.mData[i];");
+			return res;
+			+/
+			auto res = ThisType(0);
+			mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
 			return res;
 		}
 		else static if(op == "*")
@@ -246,10 +256,15 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		static if(op == "*" || op == "/")
 		{
+			/+
 			auto res = ThisType(0);
 			foreach(size_t i, ref element; mData)
 				mixin("res.mData[i] = element"~op~"rhs;");
 
+			return res;
+			+/
+			auto res = ThisType(0);
+			mixin("res.mData[] = mData[]"~op~"rhs;");
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
@@ -304,7 +319,7 @@ struct Matrix(size_t r, size_t c, T = double)
 			return res;
 			+/
 			auto res = ThisType(0);
-			res.mData[] = lhs*mData[];
+			mixin("res.mData[] = lhs"~op~"mData[];");
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
