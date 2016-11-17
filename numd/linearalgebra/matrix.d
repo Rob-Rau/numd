@@ -53,11 +53,10 @@ struct Matrix(size_t r, size_t c, T = double)
 
 @nogc
 {
-	private int* referenceCount = null;
-	
 	// if matrix is small enough, stack allocate it.
 	static if(r*c*T.sizeof > 512)
 	{
+		private int* referenceCount = null;
 		T[] mData;
 		
 		private void allocData()
@@ -67,6 +66,33 @@ struct Matrix(size_t r, size_t c, T = double)
 			(*referenceCount) = 1;
 		}
 		
+		this(const T[] values)
+		{
+			if(referenceCount is null)
+			{
+				//printf("copy ctor1\n");
+				allocData();
+				mData[] = values[];
+			}
+			else
+			{
+				mData[] = values[];
+			}
+		}
+
+		this(this)
+		{
+			if(referenceCount !is null)
+			{
+				//printf("in postblit\n");
+				(*referenceCount)++;
+			}
+			else
+			{
+				//printf("Error Matrix referenceCount somehow null in postblit\n");
+			}
+		}
+
 		~this()
 		{
 			if(referenceCount !is null)
@@ -105,6 +131,11 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 
 		}
+
+		this(const T[] values)
+		{
+			mData[] = values[];
+		}
 	}
 	
 	this(T[r*c] values)
@@ -121,19 +152,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		mData[] = values;
 	}
 
-	this(const T[] values)
-	{
-		if(referenceCount is null)
-		{
-			//printf("copy ctor1\n");
-			allocData();
-			mData[] = values[];
-		}
-		else
-		{
-			mData[] = values[];
-		}
-	}
 	/+
 	this(ref T[] data)
 	{
@@ -154,19 +172,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		else
 		{
 			mData[] = init;
-		}
-	}
-
-	this(this)
-	{
-		if(referenceCount !is null)
-		{
-			//printf("in postblit\n");
-			(*referenceCount)++;
-		}
-		else
-		{
-			//printf("Error Matrix referenceCount somehow null in postblit\n");
 		}
 	}
 
@@ -685,7 +690,7 @@ struct Matrix(size_t r, size_t c, T = double)
 		}
 		return matStr;
 	}
-package:
+
 	size_t mRows = r;
 	size_t mCols = c;
 
