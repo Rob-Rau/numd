@@ -5,12 +5,13 @@
 	"authors": ["Rob Rau"],
 	"targetType": "sourceLibrary",
 	"sourcePaths": [
-		"numd/linearalgebra"
+		"numd"
 	],
 	"importPaths": ["numd"],
 	"dependencies": {
 		"cblas": "~>0.1.0",
-		"scid": "~>0.3.0"
+		"scid": "~>0.3.0",
+		"mpi": "~master"
 	},
 	"buildTypes": {
 		"unittest": {

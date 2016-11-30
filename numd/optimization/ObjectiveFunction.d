@@ -11,7 +11,7 @@ import numd.optimization.FiniteDifference;
 
 abstract class ObjectiveFunction : IGradient
 {
-	Complex!double Compute(Complex!double[] designVar);
+	shared Complex!double Compute(Complex!double[] designVar);
 
 	Complex!double[] Constraint(Complex!double[] designVar);
 
