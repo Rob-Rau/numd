@@ -3,7 +3,7 @@
 	"description": "A numerical computing package for D",
 	"copyright": "Copyright © 2016, Robert F. Rau II",
 	"authors": ["Rob Rau"],
-	"targetType": "sourceLibrary",
+	"targetType": "library",
 	"sourcePaths": [
 		"numd"
 	],

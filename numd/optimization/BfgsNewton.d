@@ -423,7 +423,7 @@ version(unittest)
 		//bfgs.DebugMode = true;
 		bfgs.Tolerance = 1.0e-10;
 		bfgs.InitialGuess = [-1.2, 1.0, 1.0, 1.0];
-		rose.DerivativeType = "Optimization.FiniteDifference.FiniteDifference";
+		rose.DerivativeType = "numd.optimization.FiniteDifference.FiniteDifference";
 		//bfgs.ErrorConvergence = true;
 		
 		writeln();

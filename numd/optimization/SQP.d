@@ -167,8 +167,8 @@ class SQP : Optimizer
 
 			double skykDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)yk, 1);
 
-			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk, cast(int)sk.length, 0, cast(double*)skTmp, 1);
-			//gemm('n', 'n', 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk, cast(int)sk.length, 0, cast(double*)skTmp, 1);
+			gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk.ptr, cast(int)sk.length, 0, cast(double*)skTmp, 1);
+			
 			double skBkdot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)skTmp, 1);
 
 			if( skykDot >= 0.2*skBkdot)
@@ -179,25 +179,19 @@ class SQP : Optimizer
 			{
 				theta = (0.8*skBkdot)/(skBkdot - skykDot);
 			}
-			//CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans
+
 			gemv(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
-			//gemv('n', cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
+
 			rk[] = theta*yk[] + (1 - theta)*skTmp[];
 
 			BkLast[] = Bk[];
 
-			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)BkLast, cast(int)sk.length, 0, cast(double*)skTmp1, 1);
-			
-			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)skTmp.length, cast(int)skTmp.length, 1, 1, cast(double*)skTmp, cast(int)skTmp.length, cast(double*)skTmp1, 1, 0, cast(double*)Bktmp, cast(int)skTmp.length);
-			
-			gemm(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)rk.length, cast(int)rk.length, 1, 1, cast(double*)rk, cast(int)rk.length, cast(double*)rk, 1, 0, cast(double*)rkTmp, cast(int)rk.length);
-			/*
-			gemm('n', 'n', 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)BkLast, cast(int)sk.length, 0, cast(double*)skTmp1, 1);
+			gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)BkLast, cast(int)sk.length, 0, cast(double*)skTmp1, 1);
 
-			gemm('n', 'n', cast(int)skTmp.length, cast(int)skTmp.length, 1, 1, cast(double*)skTmp, cast(int)skTmp.length, cast(double*)skTmp1, 1, 0, cast(double*)Bktmp, cast(int)skTmp.length);
+			gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)skTmp.length, cast(int)skTmp.length, 1, 1, cast(double*)skTmp, cast(int)skTmp.length, cast(double*)skTmp1, 1, 0, cast(double*)Bktmp, cast(int)skTmp.length);
 
-			gemm('n', 'n', cast(int)rk.length, cast(int)rk.length, 1, 1, cast(double*)rk, cast(int)rk.length, cast(double*)rk, 1, 0, cast(double*)rkTmp, cast(int)rk.length);
-			*/
+			gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, cast(int)rk.length, cast(int)rk.length, 1, 1, cast(double*)rk, cast(int)rk.length, cast(double*)rk, 1, 0, cast(double*)rkTmp, cast(int)rk.length);
+
 			double skrkDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)rk, 1);
 
 
@@ -374,4 +368,105 @@ class SQP : Optimizer
 	private ObjectiveFunction mObjectiveFunction;
 	private double[] mLambdaInitial;
 	private double mEta = 0.1;
+}
+
+version(unittest)
+{
+	class Drag : ObjectiveFunction
+	{
+		import numd.optimization.SecantRoot;
+
+		this() { Constraints = 1; }
+
+		final override Complex!double Compute(Complex!double[] designVar)
+		{
+			Complex!double Sref = designVar[1];		// m^2
+			Complex!double Swet = 2.05*Sref;		// m^2
+			Complex!double AR = designVar[0];
+			Complex!double b = sqrt(AR*Sref);		// m
+			Complex!double c = Sref/b;				// m
+			Complex!double Re = (rho*V*c)/mu;
+			Complex!double Cf = 0.074/(Re^^0.2);
+			
+			Complex!double Ww = WingWeight(AR, Sref);// N
+			Wtot = Ww+W0;
+			CL = (2*Wtot)/(rho*V^^2*Sref);
+			
+			Complex!double CD = 0.03062702/Sref + k*Cf*(Swet/Sref) + CL^^2/(PI*AR*e);
+			
+			//return CD;
+			
+			Complex!double LoverD = CL/CD;
+			return Wtot/LoverD;
+		}
+
+		final override Complex!double[] Constraint(Complex!double[] designVar)
+		{
+			Complex!double[] c = new Complex!double[1];
+			auto Vmin = 22;
+			auto CLmax = 2;
+			auto AR = designVar[0];
+			auto Sref = designVar[1];
+			Complex!double Ww = WingWeight(AR, Sref);// N
+			Wtot = Ww+W0;
+
+			c[0] = Sref - (2*Wtot)/(rho*Vmin^^2*CLmax);
+			return c;
+		}
+
+		Complex!double WingWeight(Complex!double AR, Complex!double Sref)
+		{
+			auto rootFind = new SecantRoot;
+			auto span = sqrt(Sref*AR);
+			double Nult = 2.5;
+			double tc = 0.12;
+			auto phi = ((8.71e-5*Nult*span^^3)/(Sref*tc))^^2;
+			auto b = -(90.84*Sref + phi*W0);
+			auto c = 2062.98*Sref^^2 - phi*W0^^2;
+			
+			Complex!double WeightDelegate(Complex!double Ww)
+			{
+				return 45.42*Sref + 8.71e-5*((Nult*span^^3*sqrt(W0*(Ww+W0)))/(Sref*tc)) - Ww;
+			}
+			
+			//return rootFind.Solve(&WeightDelegate, complex(1000.0));
+			return (-b + sqrt(b^^2 - 4*c))/2;
+		}
+		
+		private Complex!double CL;
+		private Complex!double Wtot;	// N
+		private double W0 = 4940;		// N
+		private double rho = 1.23;		// kg/m^3
+		private double mu = 17.9e-6;	// kg/(m s)
+		private double V = 35;			// m/s
+		private double k = 1.2;
+		private double e = 0.96;
+	}
+
+	unittest
+	{
+		auto sqp = new SQP;
+		auto drag = new Drag;
+		Result result;
+		double[2] initialGuess = [48, 52];
+
+		drag.DerivativeType = "numd.optimization.FiniteDifference.FiniteDifference";
+		drag.StepSize = 1.0e-3;
+		//sqp.DebugMode = true;
+		//sqp.InitialGuess = [8, 5];
+		sqp.InitialGuess = new double[initialGuess.length];
+		sqp.InitialGuess[] = initialGuess;
+		sqp.PointFilename = "SQPpoints.csv";
+		sqp.ErrorFilename = "SQPerror.csv";
+		sqp.FileOutput = false;
+		writeln("Starting optimization");
+		result = sqp.Optimize(drag);
+		writeln();
+		writeln("SQP:");
+		writefln("\tOptimal Point =  [%(%20.20f, %)]", result.DesignVariables);
+		writefln("\tDrag = %20.20f", result.ObjectiveFunctionValue);
+		writeln("\tConverged in ", result.Iterations, " iterations.");
+		writeln("\tComputation time: ", result.ComputationTime, " usecs.");
+		writeln("\tMinor iterations: ", result.MinorIterations);
+	}
 }

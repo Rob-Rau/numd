@@ -86,7 +86,7 @@ abstract class ObjectiveFunction : IGradient
 	@property DerivativeType(string derType) { mDerivativeType = derType; }
 	@property DerivativeType() { return mDerivativeType; }
 
-	private string mDerivativeType = "Optimization.ComplexStep.ComplexStep";
+	private string mDerivativeType = "numd.optimization.ComplexStep.ComplexStep";
 	private double h = 1.0e-10;
 	private int mConstraints = 0;
 }
