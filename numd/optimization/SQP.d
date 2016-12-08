@@ -31,7 +31,8 @@ class MeritFunction : InteriorPenaltyFunction
 		{
 			cNorm += abs(c[i]);
 		}
-		return ObjectiveFunc.Compute(designVar) + (1/Mu)*cNorm;
+		//return ObjectiveFunc.Compute(designVar) + (1.0/Mu)*cNorm;
+		return (1.0/Mu)*cNorm;
 	}
 	
 	final override Complex!double[] Constraint(Complex!double[] designVar)
@@ -40,11 +41,16 @@ class MeritFunction : InteriorPenaltyFunction
 		c[0] = 0;
 		return c;
 	}
+
+	override void UpdateActiveSet(double[] x)
+	{
+
+	}
 }
 
 class SQP : Optimizer
 {
-	
+	int id;
 	final override protected Result doOptimize(ObjectiveFunction objectiveFunction)
 	{
 		version(X86)
@@ -63,8 +69,8 @@ class SQP : Optimizer
 		Result lineResult;
 		Result lineResultLast = lineResult;
 		Result result;
-		MeritFunction Ø = new MeritFunction;
-		Ø.ObjectiveFunc = objectiveFunction;
+		MeritFunction meritFunc = new MeritFunction;
+		meritFunc.ObjectiveFunc = objectiveFunction;
 		int constraints = ObjectiveFunc.Constraints;
 		bool converged = false;
 		double error = 1;
@@ -87,6 +93,7 @@ class SQP : Optimizer
 		double[] BkLast = new double[gk.length^^2];
 		double[] Bktmp = new double[gk.length^^2];
 		double[] lambdaK = new double[constraints];
+
 		double[] A = new double[xk.length*constraints];
 		double[] AT = new double[xk.length*constraints];
 		double[] I = IdentityMatrix(cast(int)gk.length);
@@ -94,9 +101,15 @@ class SQP : Optimizer
 		double[] gc = new double[xk.length+constraints];
 		double[] pl = new double[xk.length+constraints];
 		double[] c = new double[constraints];
+		
 		double[] skTmp = new double[sk.length];
 		double[] skTmp1 = new double[sk.length];
-		double µ = 0;
+		double[][] cGrad = ObjectiveFunc.ConstraintGradient(xk);
+		double[][] cGradLast = ObjectiveFunc.ConstraintGradient(xk);
+
+		//double mu = 1.0e-8;
+		double mu = 1.0;
+		//double mu = 0;
 		double alpha = 1;
 		double D = 0;
 		double tau = 0.5;
@@ -114,6 +127,9 @@ class SQP : Optimizer
 		c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
 		//if(DebugMode) writeln("Found initial constraint values. c = ", c);
 
+		double funcVal;
+		double funcValLast;
+
 		while( (abs(kkt1) > Tolerance) || (abs(kkt2) > Tolerance) )
 		{
 			//c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
@@ -124,7 +140,8 @@ class SQP : Optimizer
 			gc[xk.length..$] = -c[];
 			//if(DebugMode) writeln("Spliced gc vector. gc = ", gc, "\tgk = ", gk);
 
-			BA0 = MakeBAMatrix(Bk, Ak(xk), AkT(xk));
+			BA0 = MakeBAMatrix(Bk, Ak(cGrad), AkT(cGrad));
+
 			//if(DebugMode) writeln("Made BA matrix");
 			//if(DebugMode) PrintMatrix(BA0, cast(int)xk.length+constraints);
 			MatrixView!double mat;
@@ -135,35 +152,61 @@ class SQP : Optimizer
 			pl = solve(mat, gc);
 
 
+			pkLast[] = pk[];
 			pk[] = pl[0..xk.length];
 			lambdaK[] = pl[xk.length..$];
 
 			gamma = minPos!("a > b")(lambdaK)[0];
 
-			if(!(1/µ >= delta + gamma))
+			if(!(1.0/mu >= (delta + gamma)))
 			{
-				µ = 1/(gamma + 2*delta);
+				mu = 1.0/(gamma + 2.0*delta);
 			}
 
-			alpha = 1;
+			alpha = 1.0;
+			//alpha = 0.05;
 
-			Ø.Mu = µ;
+			//if(id == 0) writeln("mu = ", mu);
+			meritFunc.Mu = mu;
 
-			tmp[] = xk[] + alpha*pk[];
-			D = dot(cast(int)pk.length, cast(double*)Ø.Gradient(xk), 1, cast(double*)pk, 1);
-			while( Ø.Compute(tmp.complex()).re > (Ø.Compute(xk.complex()).re + Eta*alpha*D) )
+			//tmp[] = xk[] + alpha*pk[];
+			tmp[] = gk[] + meritFunc.Gradient(xk)[];
+			D = dot(cast(int)pk.length, cast(double*)tmp, 1, cast(double*)pk, 1);
+			//D = dot(cast(int)pk.length, cast(double*)meritFunc.Gradient(xk), 1, cast(double*)pk, 1);
+			funcValLast = funcVal;
+			funcVal = objectiveFunction.Compute(xk.complex).re;
+			auto mfxk = funcVal + meritFunc.Compute(xk.complex()).re;
+			do
 			{
-				alpha = tau*alpha;
 				tmp[] = xk[] + alpha*pk[];
+				objectiveFunction.UpdateActiveSet(tmp);
+				alpha = tau*alpha;
+				//auto mfTmp = meritFunc.Compute(xk.complex()).re;
+				if(id == 0) writeln("minor iteration = ", minorIterations);
+				//if(id == 0) writeln("minor iteration = ", minorIterations, "; mfTmp = ", mfTmp, "; Eta*alpha*D = ", Eta*alpha*D, "; mfTmp + Eta*alpha*D = ", mfTmp + Eta*alpha*D);
 				minorIterations++;
-				//D = dot(cast(int)pk.length, cast(double*)Ø.Gradient(xk), 1, cast(double*)pk, 1);
-			}
+				//D = dot(cast(int)pk.length, cast(double*)meritFunc.Gradient(xk), 1, cast(double*)pk, 1);
+			} while( (objectiveFunction.Compute(tmp.complex).re + meritFunc.Compute(tmp.complex()).re) > (mfxk + Eta*alpha*D) );
 
+			alpha /= tau;
+			
 			xkLast[] = xk[];
 
 			sk[] = alpha*pk[];
 			xk[] = xkLast[] + alpha*pk[];
-			yk = UpdateYk(xkLast, xk, lambdaK);
+
+			cGradLast[] = cGrad[];
+			cGrad = ObjectiveFunc.ConstraintGradient(xk);
+			c[] = ObjectiveFunc.Constraint(xk.complex()).Real()[];
+			gkLast[] = gk[];
+			gk[] = objectiveFunction.Gradient(xk);
+
+			objectiveFunction.UpdateActiveSet(xk);
+			objectiveFunction.Constraint(xk.complex);
+			constraints = objectiveFunction.Constraints;
+			//if(id == 0) writeln("minor iterations done; alpha = ", alpha, " xk = ", xk);
+
+			yk = UpdateYk(gkLast, gk, cGradLast, cGrad, lambdaK);
 
 			double skykDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)yk, 1);
 
@@ -180,7 +223,7 @@ class SQP : Optimizer
 				theta = (0.8*skBkdot)/(skBkdot - skykDot);
 			}
 
-			gemv(CBLAS_ORDER.RowMajor, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
+			gemv(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)Bk, cast(int)sk.length, cast(double*)sk, 1, 0, cast(double*)skTmp, 1);
 
 			rk[] = theta*yk[] + (1 - theta)*skTmp[];
 
@@ -195,21 +238,19 @@ class SQP : Optimizer
 			double skrkDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)rk, 1);
 
 
-			//if((iterations%4) || (iterations == 0) )
-			if(true)
-			{
-				Bk[] = BkLast[] - (1/skBkdot)*Bktmp[] + (1/skrkDot)*rkTmp[];
-			}
-			else
+			if((iterations%4) || (iterations == 0) )
+			//if(false)
 			{
 				//if(DebugMode) writeln("Here");
 				Bk[] = I;
 			}
+			else //if(true)
+			{
+				Bk[] = BkLast[] - (1/skBkdot)*Bktmp[] + (1/skrkDot)*rkTmp[];
+			}
+			
 
-			kkt1 = Kkt1(xk, lambdaK);
-
-			c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
-			gk[] = objectiveFunction.Gradient(xk);
+			kkt1 = Kkt1(gk, cGrad, lambdaK);
 
 			kkt2 = 0;
 			for(int i = 0; i < constraints; i++)
@@ -217,10 +258,10 @@ class SQP : Optimizer
 				kkt2 += c[i];
 			}
 
-			if(DebugMode)
+			if(DebugMode && (id == 0))
 			{
-				writeln("gk = ", gk, "\t\t\tpk = ", pk);
-				writeln("f = ", ObjectiveFunc.Compute(xk.complex()), "\tKKT1 = ", kkt1, "\t\t\t\tKKT2 = ", kkt2, "\t\t\t\txk = ", xk);
+				writeln("gk = ", gkLast, "\t\t\tpk = ", pkLast);
+				writeln("f = ", funcVal, "\tKKT1 = ", kkt1, "\t\t\t\tKKT2 = ", kkt2, "\t\t\t\txk = ", xkLast, "\t\t\t\t%error = ", (funcVal - funcValLast)/funcVal);
 				writeln("------------------------------------------------------------------------------------------------------------");
 				writeln();
 				Thread.sleep(dur!("msecs")(150));
@@ -240,12 +281,10 @@ class SQP : Optimizer
 		return result;
 	}
 
-	private double Kkt1(double[] xk, double[] lambda)
+	private double Kkt1(double[] gk, double[][] cGrad, double[] lambda)
 	{
-		double[] gk = ObjectiveFunc.Gradient(xk);
-		double[][] cGrad = ObjectiveFunc.ConstraintGradient(xk);
-		double[] cSum = new double[xk.length];
-		double[] yk = new double[xk.length];
+		double[] cSum = new double[gk.length];
+		double[] yk = new double[gk.length];
 		double gSum = 0;
 		cSum[] = 0;
 		
@@ -265,15 +304,11 @@ class SQP : Optimizer
 		return gSum;
 	}
 
-	private double[] UpdateYk(double[] xk, double[] xkNext, double[] lambda)
+	private double[] UpdateYk(double[] gk, double[] gkNext, double[][] cGrad, double[][] cGradNext, double[] lambda)
 	{
-		double[] gk = ObjectiveFunc.Gradient(xk);
-		double[] gkNext = ObjectiveFunc.Gradient(xkNext);
-		double[][] cGrad = ObjectiveFunc.ConstraintGradient(xk);
-		double[][] cGradNext = ObjectiveFunc.ConstraintGradient(xkNext);
-		double[] cSum = new double[xk.length];
-		double[] cSumNext = new double[xk.length];
-		double[] yk = new double[xk.length];
+		double[] cSum = new double[gk.length];
+		double[] cSumNext = new double[gk.length];
+		double[] yk = new double[gk.length];
 
 		cSum[] = 0;
 		cSumNext[] = 0;
@@ -326,34 +361,29 @@ class SQP : Optimizer
 		return tmpBA;
 	}
 
-	private double[] Ak(double[] xk)
+	private double[] Ak(double[][] cGrad)
 	{
-		double[] A = new double[xk.length*ObjectiveFunc.Constraints];
-		double[][] tmpA = ObjectiveFunc.ConstraintGradient(xk);
+		double[] A = new double[cGrad[0].length*ObjectiveFunc.Constraints];
 		int cl = ObjectiveFunc.Constraints;
 		int i1 = 0;
-		//if(DebugMode) writeln("Ak: About to compute. cl = ", cl, " xk.length = ", xk.length);
-		for(int i = 0; i < xk.length; i+=cl, i1++)
+		for(int i = 0; i < cGrad[0].length; i+=cl, i1++)
 		{
-			//if(DebugMode) writeln("Ak: i = ", i, "\t tmpA[0..$][i] = ", tmpA[0..$][i]);
-			//A[i*xk.length..(i*xk.length)+(cl-1)] = tmpA[0..$][i];
 			for(int j = 0; j < cl; j++)
 			{
-				A[i+j] = tmpA[j][i];
+				A[i+j] = cGrad[j][i];
 			}
 		}
 
 		return A;
 	}
 
-	private double[] AkT(double[] xk)
+	private double[] AkT(double[][] cGrad)
 	{
-		double[] A = new double[xk.length*ObjectiveFunc.Constraints];
-		double[][] tmpA = ObjectiveFunc.ConstraintGradient(xk);
+		double[] A = new double[cGrad[0].length*ObjectiveFunc.Constraints];
 		int cl = ObjectiveFunc.Constraints;
 		for(int i = 0; i < cl; i++)
 		{
-			A[i*cl..(i*cl)+(xk.length)] = tmpA[i][0..$];
+			A[i*cl..(i*cl)+(cGrad[0].length)] = cGrad[i][0..$];
 		}
 		
 		return A;
@@ -398,6 +428,11 @@ version(unittest)
 			
 			Complex!double LoverD = CL/CD;
 			return Wtot/LoverD;
+		}
+
+		final override void UpdateActiveSet(double[] designVars)
+		{
+
 		}
 
 		final override Complex!double[] Constraint(Complex!double[] designVar)
@@ -448,7 +483,8 @@ version(unittest)
 		auto sqp = new SQP;
 		auto drag = new Drag;
 		Result result;
-		double[2] initialGuess = [48, 52];
+		//double[2] initialGuess = [48, 52];
+		double[2] initialGuess = [30, 30];
 
 		drag.DerivativeType = "numd.optimization.FiniteDifference.FiniteDifference";
 		drag.StepSize = 1.0e-3;
@@ -459,6 +495,7 @@ version(unittest)
 		sqp.PointFilename = "SQPpoints.csv";
 		sqp.ErrorFilename = "SQPerror.csv";
 		sqp.FileOutput = false;
+		sqp.Eta = 0.1;
 		writeln("Starting optimization");
 		result = sqp.Optimize(drag);
 		writeln();

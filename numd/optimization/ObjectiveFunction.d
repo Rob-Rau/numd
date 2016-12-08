@@ -15,6 +15,8 @@ abstract class ObjectiveFunction : IGradient
 
 	Complex!double[] Constraint(Complex!double[] designVar);
 
+	void UpdateActiveSet(double[] x);
+
 	double[] Gradient(in double[] point)
 	{
 		//writeln("Computing gradient");

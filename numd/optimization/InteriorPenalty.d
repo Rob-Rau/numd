@@ -34,6 +34,11 @@ abstract class InteriorPenaltyFunction : ObjectiveFunction
 
 class LogarithmicPenalty : InteriorPenaltyFunction
 {
+	override void UpdateActiveSet(double[] x)
+	{
+
+	}
+
 	final override Complex!double Compute(Complex!double[] designVar)
 	{
 		Complex!double logSum = 0.0;
