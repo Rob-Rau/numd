@@ -92,11 +92,12 @@ class SQP : Optimizer
 		double[] Bk = new double[gk.length^^2];
 		double[] BkLast = new double[gk.length^^2];
 		double[] Bktmp = new double[gk.length^^2];
-		double[] lambdaK = new double[constraints];
 
+		double[] I = IdentityMatrix(cast(int)gk.length);
+
+		double[] lambdaK = new double[constraints];
 		double[] A = new double[xk.length*constraints];
 		double[] AT = new double[xk.length*constraints];
-		double[] I = IdentityMatrix(cast(int)gk.length);
 		double[] BA0 = new double[(xk.length+constraints)^^2];
 		double[] gc = new double[xk.length+constraints];
 		double[] pl = new double[xk.length+constraints];
@@ -163,6 +164,8 @@ class SQP : Optimizer
 				mu = 1.0/(gamma + 2.0*delta);
 			}
 
+			if(id == 0) writeln("mu = ", mu);
+			
 			alpha = 1.0;
 			//alpha = 0.05;
 
@@ -204,6 +207,13 @@ class SQP : Optimizer
 			objectiveFunction.UpdateActiveSet(xk);
 			objectiveFunction.Constraint(xk.complex);
 			constraints = objectiveFunction.Constraints;
+			lambdaK.length = constraints;
+			A.length = xk.length*constraints;
+			AT.length = xk.length*constraints;
+			BA0.length = (xk.length+constraints)^^2;
+			gc.length = xk.length+constraints;
+			pl.length = xk.length+constraints;
+			c.length = constraints;
 			//if(id == 0) writeln("minor iterations done; alpha = ", alpha, " xk = ", xk);
 
 			yk = UpdateYk(gkLast, gk, cGradLast, cGrad, lambdaK);
@@ -238,8 +248,8 @@ class SQP : Optimizer
 			double skrkDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)rk, 1);
 
 
-			if((iterations%4) || (iterations == 0) )
-			//if(false)
+			//if((iterations%4) || (iterations == 0) )
+			if(false)
 			{
 				//if(DebugMode) writeln("Here");
 				Bk[] = I;
