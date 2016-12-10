@@ -174,7 +174,10 @@ class SQP : Optimizer
 
 			//tmp[] = xk[] + alpha*pk[];
 			tmp[] = gk[] + meritFunc.Gradient(xk)[];
-			D = dot(cast(int)pk.length, cast(double*)tmp, 1, cast(double*)pk, 1);
+			//D = dot(cast(int)pk.length, cast(double*)tmp, 1, cast(double*)pk, 1);
+			tmp[] = tmp[]*pk[];
+			import std.algorithm : sum;
+			D = tmp.sum;
 			//D = dot(cast(int)pk.length, cast(double*)meritFunc.Gradient(xk), 1, cast(double*)pk, 1);
 			funcValLast = funcVal;
 			funcVal = objectiveFunction.Compute(xk.complex).re;
@@ -218,11 +221,15 @@ class SQP : Optimizer
 
 			yk = UpdateYk(gkLast, gk, cGradLast, cGrad, lambdaK);
 
-			double skykDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)yk, 1);
+			//double skykDot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)yk, 1);
+			tmp[] = sk[]*yk[];
+			double skykDot = tmp.sum;
 
 			gemm(CBLAS_ORDER.ColMajor, CBLAS_TRANSPOSE.NoTrans, CBLAS_TRANSPOSE.NoTrans, 1, cast(int)sk.length, cast(int)sk.length, 1, cast(double*)sk, 1, cast(double*)Bk.ptr, cast(int)sk.length, 0, cast(double*)skTmp, 1);
 			
-			double skBkdot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)skTmp, 1);
+			//double skBkdot = dot(cast(int)sk.length, cast(double*)sk, 1, cast(double*)skTmp, 1);
+			tmp[] = sk[]*skTmp[];
+			double skBkdot = tmp.sum;
 
 			if( skykDot >= 0.2*skBkdot)
 			{
