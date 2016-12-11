@@ -132,7 +132,7 @@ class SQP : Optimizer
 		double funcVal;
 		double funcValLast;
 
-		while( ((abs(kkt1) > Tolerance) || (abs(kkt2) > Tolerance)) && !stop)
+		while( (((abs(kkt1) > Tolerance) || (abs(kkt2) > Tolerance)) && !stop) || (iterations <= 1))
 		{
 			//c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
 
