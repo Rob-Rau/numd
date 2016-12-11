@@ -198,10 +198,14 @@ class SQP : Optimizer
 				{
 					stop = true;
 				}
-				
+
 				//D = dot(cast(int)pk.length, cast(double*)meritFunc.Gradient(xk), 1, cast(double*)pk, 1);
 			} while( ((objectiveFunction.Compute(tmp.complex).re + meritFunc.Compute(tmp.complex()).re) > (mfxk + Eta*alpha*D)) && !stop );
 
+			if(stop)
+			{
+				break;
+			}
 			alpha /= tau;
 			
 			xkLast[] = xk[];
