@@ -121,9 +121,9 @@ class SQP : Optimizer
 		//auto f = File(PointFilename, "w");
 		//auto ferr = File(ErrorFilename, "w");
 		File f;
-		if(FileOutput) f = File(PointFilename, "w");
+		if(FileOutput) f = File(PointFilename, "a");
 		File ferr;
-		if(FileOutput) ferr = File(ErrorFilename, "w");
+		if(FileOutput) ferr = File(ErrorFilename, "a");
 		Bk[] = I;
 
 		c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
