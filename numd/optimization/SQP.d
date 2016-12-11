@@ -197,6 +197,7 @@ class SQP : Optimizer
 				if(minorIterations > 15)
 				{
 					if(id == 0) writeln("minorIterations > 15, breaking out");
+					break;
 					stop = true;
 				}
 
@@ -207,7 +208,7 @@ class SQP : Optimizer
 			{
 				break;
 			}
-			
+
 			alpha /= tau;
 			
 			xkLast[] = xk[];
