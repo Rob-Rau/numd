@@ -51,6 +51,7 @@ class MeritFunction : InteriorPenaltyFunction
 class SQP : Optimizer
 {
 	int id;
+	bool stop;
 	final override protected Result doOptimize(ObjectiveFunction objectiveFunction)
 	{
 		version(X86)
@@ -131,7 +132,7 @@ class SQP : Optimizer
 		double funcVal;
 		double funcValLast;
 
-		while( (abs(kkt1) > Tolerance) || (abs(kkt2) > Tolerance) )
+		while( ((abs(kkt1) > Tolerance) || (abs(kkt2) > Tolerance)) && !stop)
 		{
 			//c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
 
@@ -192,7 +193,7 @@ class SQP : Optimizer
 				//if(id == 0) writeln("minor iteration = ", minorIterations, "; mfTmp = ", mfTmp, "; Eta*alpha*D = ", Eta*alpha*D, "; mfTmp + Eta*alpha*D = ", mfTmp + Eta*alpha*D);
 				minorIterations++;
 				//D = dot(cast(int)pk.length, cast(double*)meritFunc.Gradient(xk), 1, cast(double*)pk, 1);
-			} while( (objectiveFunction.Compute(tmp.complex).re + meritFunc.Compute(tmp.complex()).re) > (mfxk + Eta*alpha*D) );
+			} while( ((objectiveFunction.Compute(tmp.complex).re + meritFunc.Compute(tmp.complex()).re) > (mfxk + Eta*alpha*D)) && !stop );
 
 			alpha /= tau;
 			
