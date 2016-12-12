@@ -77,8 +77,10 @@ class SQP : Optimizer
 		double error = 1;
 		double delta = 0.01;
 		double gamma;
-		double[] xk = InitialGuess;
-		double[] gk = objectiveFunction.Gradient(InitialGuess);
+		double[] xk = new double[InitialGuess.length];
+		xk[] = InitialGuess[];
+		double[] gk = new double[xk.length];
+		gk[] = objectiveFunction.Gradient(InitialGuess)[];
 		double[] pkLast = new double[gk.length];
 		double[] gkLast = new double[gk.length];
 		double[] xkLast = new double[gk.length];
@@ -174,9 +176,10 @@ class SQP : Optimizer
 			meritFunc.Mu = mu;
 
 			//tmp[] = xk[] + alpha*pk[];
-			tmp[] = gk[] + meritFunc.Gradient(xk)[];
+			auto mg = meritFunc.Gradient(xk);
+			tmp[] = gk[] + mg[];
 			//D = dot(cast(int)pk.length, cast(double*)tmp, 1, cast(double*)pk, 1);
-			tmp[] = tmp[]*pk[];
+			tmp[] *= pk[];
 			import std.algorithm : sum;
 			D = tmp.sum;
 			//D = dot(cast(int)pk.length, cast(double*)meritFunc.Gradient(xk), 1, cast(double*)pk, 1);
@@ -220,7 +223,7 @@ class SQP : Optimizer
 			cGrad = ObjectiveFunc.ConstraintGradient(xk);
 			c[] = ObjectiveFunc.Constraint(xk.complex()).Real()[];
 			gkLast[] = gk[];
-			gk[] = objectiveFunction.Gradient(xk);
+			gk[] = objectiveFunction.Gradient(xk)[];
 
 			objectiveFunction.UpdateActiveSet(xk);
 			objectiveFunction.Constraint(xk.complex);
@@ -305,7 +308,8 @@ class SQP : Optimizer
 
 		if(DebugMode) writeln("Done!");
 
-		result.DesignVariables = xk[];
+		result.DesignVariables.length = xk.length;
+		result.DesignVariables[] = xk[];
 		result.Iterations = iterations;
 		result.ObjectiveFunctionValue = ObjectiveFunc.Compute(xk.complex()).re;
 		result.MinorIterations = minorIterations;
