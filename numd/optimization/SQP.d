@@ -121,9 +121,9 @@ class SQP : Optimizer
 		//auto f = File(PointFilename, "w");
 		//auto ferr = File(ErrorFilename, "w");
 		File f;
-		if(FileOutput) f = File(PointFilename, "a");
+		if(FileOutput && (id == 0)) f = File(PointFilename, "a");
 		File ferr;
-		if(FileOutput) ferr = File(ErrorFilename, "a");
+		if(FileOutput && (id == 0)) ferr = File(ErrorFilename, "a");
 		Bk[] = I;
 
 		c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
@@ -136,7 +136,7 @@ class SQP : Optimizer
 		{
 			//c[] = ObjectiveFunc.Constraint(xk.complex()).Real();
 
-			if(FileOutput) WriteArrayCSV(f, xk);
+			if(FileOutput && (id == 0)) WriteArrayCSV(f, xk);
 
 			gc[0..xk.length] = -gk[];
 			gc[xk.length..$] = -c[];
