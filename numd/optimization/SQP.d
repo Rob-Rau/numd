@@ -197,7 +197,7 @@ class SQP : Optimizer
 				//if(id == 0) writeln("minor iteration = ", minorIterations, "; mfTmp = ", mfTmp, "; Eta*alpha*D = ", Eta*alpha*D, "; mfTmp + Eta*alpha*D = ", mfTmp + Eta*alpha*D);
 				minorIterations++;
 
-				if(minorIterations > 15)
+				if(minorIterations > 35)
 				{
 					if(id == 0) writeln("minorIterations > 15, breaking out");
 					stop = true;
