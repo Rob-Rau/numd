@@ -7,11 +7,7 @@
 	"sourcePaths": [
 		"numd/linearalgebra"
 	],
-	"importPaths": ["numd"],
-	"dependencies": {
-		"cblas": "~>0.1.0",
-		"scid": "~>0.3.0"
-	},
+	"importPaths": ["./"],
 	"buildTypes": {
 		"unittest": {
 			"buildOptions": ["unittests", "debugMode", "debugInfo"]

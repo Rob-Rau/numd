@@ -7,10 +7,6 @@ import std.meta;
 import std.complex;
 import std.exception;
 
-import scid.bindings.lapack.dlapack;
-
-//alias WriteArrayCSV = Matrix.WriteArrayCSV;
-
 struct Mcomplex(T)
 {
 	alias mData this;
