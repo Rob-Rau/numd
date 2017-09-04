@@ -38,14 +38,11 @@ struct Mcomplex(T)
 
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
-//struct Matrix(size_t r, size_t c, T = double, operations...)
 struct Matrix(size_t r, size_t c, T = double)
 {
 	import std.experimental.allocator.mallocator;
-	//alias ops = AliasSeq!operations;
 
 	alias ThisType = Matrix!(r, c, T);
-	//alias mData this;
 
 @nogc
 {
@@ -66,7 +63,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			if(referenceCount is null)
 			{
-				//printf("copy ctor1\n");
 				allocData();
 				mData[] = values[];
 			}
@@ -80,7 +76,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			if(referenceCount !is null)
 			{
-				//printf("in postblit\n");
 				(*referenceCount)++;
 			}
 			else
@@ -97,7 +92,6 @@ struct Matrix(size_t r, size_t c, T = double)
 				{
 					if(mData !is null)
 					{
-						//printf("dealloc\n");
 						Mallocator.instance.deallocate(mData);
 						mData = null;
 					}
@@ -105,7 +99,6 @@ struct Matrix(size_t r, size_t c, T = double)
 				}
 				else if((*referenceCount) > 1)
 				{
-					//printf("de ref\n");
 					(*referenceCount)--;
 				}
 				else if((*referenceCount) == 0)
@@ -136,30 +129,18 @@ struct Matrix(size_t r, size_t c, T = double)
 	
 	this(T[r*c] values)
 	{
-		//printf("copy ctor3\n");
 		allocData();
 		mData[] = values;
 	}
 
 	this(immutable T[r*c] values...)
 	{
-		//printf("copy ctor2\n");
 		allocData();
 		mData[] = values;
 	}
 
-	/+
-	this(ref T[] data)
-	{
-		printf("ref ctor\n");
-		mData = data;
-		referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
-		(*referenceCount) = 0;
-	}+/
-	
 	this(double init)
 	{
-		//printf("init ctor\n");
 		allocData();
 		static if(is(T : Mcomplex!double))
 		{
@@ -199,16 +180,9 @@ struct Matrix(size_t r, size_t c, T = double)
 
 	Matrix!(r, ic, rhsType) opBinary(string op, size_t ic, rhsType)(ref Matrix!(r, ic, rhsType) rhs)
 	{
-		//static assert(is (T : rhsType));
 		static if(op == "+" || op == "-")
 		{
 			static assert(ic == c, "Incompatible matricies");
-			/+
-			auto res = ThisType(0);
-			foreach(size_t i, ref element; res.mData)
-				mixin("element = mData[i] "~op~" rhs.mData[i];");
-			return res;
-			+/
 			auto res = ThisType(0);
 			mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
 			return res;
@@ -227,16 +201,9 @@ struct Matrix(size_t r, size_t c, T = double)
 
 	Matrix!(r, ic, rhsType) opBinary(string op, size_t ic, rhsType)(Matrix!(r, ic, rhsType) rhs)
 	{
-		//static assert(is (T : rhsType));
 		static if(op == "+" || op == "-")
 		{
 			static assert(ic == c, "Incompatible matricies");
-			/+
-			auto res = ThisType(0);
-			foreach(size_t i, ref element; res.mData)
-				mixin("element = mData[i] "~op~" rhs.mData[i];");
-			return res;
-			+/
 			auto res = ThisType(0);
 			mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
 			return res;
@@ -257,13 +224,6 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		static if(op == "*" || op == "/")
 		{
-			/+
-			auto res = ThisType(0);
-			foreach(size_t i, ref element; mData)
-				mixin("res.mData[i] = element"~op~"rhs;");
-
-			return res;
-			+/
 			auto res = ThisType(0);
 			mixin("res.mData[] = mData[]"~op~"rhs;");
 			return res;
@@ -276,13 +236,10 @@ struct Matrix(size_t r, size_t c, T = double)
 		static assert(is (T : lhsType));
 		static assert(ic == r, "Incompatible matricies");
 
-		//auto res = Matrix!(ir, c, T)(0);
 		for(int i = 0; i < ir; i++)
 			for(int j = 0; j < c; j++)
 				for(int k = 0; k < ic; k++)
 					output.mData[i*c + j] += mData[ic*i + k]*rhs.mData[k*c + j];
-		
-		//return res;
 	}
 
 	Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(ref Matrix!(ir, ic, lhsType) lhs)
@@ -312,13 +269,6 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		static if(op == "*" || op == "/")
 		{
-			/+
-			auto res = ThisType(0);
-			foreach(size_t i, element; mData)
-				mixin("res.mData[i] = lhs"~op~"element;");
-			
-			return res;
-			+/
 			auto res = ThisType(0);
 			mixin("res.mData[] = lhs"~op~"mData[];");
 			return res;
@@ -432,10 +382,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		static ThisType Identity()
 		{
-			//assert(r == c, "Not a square matrix, no identity");
-			//auto ident = new ThisType;
 			auto ident = ThisType(0);
-			//ident.mData[] = 0;
 			for(int i = 0; i < r*c; i += r+1)
 			{
 				ident.mData[i] = 1;
@@ -446,7 +393,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		ThisType Inverse()
 		{
 			auto inv = Identity();
-			//auto rref = new ThisType(mData);
 			auto rref = ThisType(mData);
 
 			int currRow = 0, currCol = 0;
@@ -463,8 +409,6 @@ struct Matrix(size_t r, size_t c, T = double)
 						auto first = rref.mData[currRow*c + currCol];
 						row[] /= first;
 						invRow[] /= first;
-						//debug writeln("Normalizing row " ~ to!string(currRow));
-						//debug writeln(rref.ToString());
 					}
 					// Find all non-zero rows in this column and scale the current 
 					// row by the value in other row, then subtract current row from
@@ -482,8 +426,6 @@ struct Matrix(size_t r, size_t c, T = double)
 								auto first = rref.mData[j*c + currCol];
 								nextRow[] -= (first*row[])[];
 								invNexRow[] -= (first*invRow[])[];
-								//debug writeln("Subtracting row " ~ to!string(currRow) ~ " from " ~ to!string(j));
-								//debug writeln(rref.ToString());
 							}
 						}
 					}
@@ -519,43 +461,14 @@ struct Matrix(size_t r, size_t c, T = double)
 						// All entries in this column are 0, move on
 						else if(j == r-1)
 						{
-							//currRow++;
 							currCol++;
 						}
 					}
-					//currCol++;
 				}
 			}
-
-			//enforce(rref == ThisType.Identity(), "Matrix not invertible");
-
 			return inv;
 		}
 	}
-/+
-	void swap(ref ThisType rhs)
-	{
-		auto tmp = mData;
-		mData = rhs.mData;
-		rhs.mData = tmp;
-	}
-+/
-	/+
-	ref S opAssign(ref const S s)
-	{
-		a = s.a;
-		return this;
-	}
-	+/
-/+
-	ref ThisType opAssign(ref const ThisType rhs)
-	{
-		printf("In opAssign 1\n");
-		//writeln("In opAssign 1");
-		mData[] = rhs.mData[];
-		return this;
-	}
-	+/
 
 	static if(r*c*T.sizeof > 512)
 	{
@@ -563,15 +476,12 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			if((referenceCount is null) && (rhs.referenceCount !is null))
 			{
-				//printf("In opAssign 2_1\n");
 				referenceCount = rhs.referenceCount;
 				(*referenceCount)++;
 				mData = rhs.mData;
 			}
 			else
 			{
-				//printf("In opAssign 2_2\n");
-				//writeln("In opAssign 2");
 				mData[] = rhs.mData[];
 			}
 			return this;
@@ -580,14 +490,12 @@ struct Matrix(size_t r, size_t c, T = double)
 
 	ref ThisType opAssign(const T[r*c] rhs)
 	{
-		//printf("In opAssign 3\n");
 		mData[] = rhs[];
 		return this;
 	}
 
 	ref ThisType opAssign(const T[] rhs)
 	{
-		//printf("In opAssign 3\n");
 		mData[] = rhs[];
 		return this;
 	}
@@ -623,7 +531,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			Vector!(3) cross(Vector!(3) rhs)
 			{
-				//auto res = new Vector!(3);
 				auto res = Vector!(3)(0);
 				
 				res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
@@ -668,8 +575,8 @@ struct Matrix(size_t r, size_t c, T = double)
 		return mData;
 	}
 
-	@property size_t rows() { return mRows; };
-	@property size_t columns() { return mCols; };
+	@property size_t rows() { return r; };
+	@property size_t columns() { return c; };
 }
 	string ToString()
 	{
@@ -686,12 +593,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		}
 		return matStr;
 	}
-
-	size_t mRows = r;
-	size_t mCols = c;
-
-	//T[r*c] mData;
-	// = new T[r*c];
 }
 
 static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T) x)
