@@ -1,0 +1,9 @@
+{
+	"name": "matrixmathdemo",
+	"targetType": "executable",
+	"sourcePaths": ["./"],
+	"importPaths": ["../../../"],
+	"dependencies": {
+		"numd": {"path": "../../../"}
+	}
+}

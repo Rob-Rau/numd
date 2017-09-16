@@ -1,38 +1,61 @@
 # Numd
-A numerical methods library for the [D Programming language](https://dlang.org).
+A simple @nogc matrix math library for the
+[D Programming language](https://dlang.org).
 
 ## Intro
-Numd is my attempt at a numerical methods library written in the [D Programming language](https://dlang.org).
-So far it contains a number of optimization algorithms (that desperately need to be refactored), a handful of differentiation
-methods, one integrator and a currently evolving linear algebra package.
+Numd is currently just a matrix math library intended to support
+[EbbCFD](https://github.com/Rob-Rau/EbbCFD). It can perform basic
+matrix math operations in an intuitive API. It is not particularly
+fast or efficient but it does get the job done. More work on
+performance is intended (quite possible by utilizing
+[mir](https://github.com/libmir/mir))
 
-I started this project for a class I took during my undergrad. The class itself was
-focused on optimization methods, which I implemented in D, but as I went I was displeased
-with D's mathematics and numerical method library support (sorry scid). I wanted a more 
-~~object oriented~~ TEMPLATES!! (or whatever I feel appropriate) approach so I decided to write my own, based off what I had done for class.
+## Usage
+One of the primary goals of Numd's matrix math library was ease of
+use. If one is familliar with blas and lapack, the matrix routines
+are very cumbersom to use. On the flip side, a package like Matlab
+has very intuitive matrix math support. I aimed for the later when
+designing this library.
 
-## Things planned at this point:
-- More differentiation (2nd order, 3rd order, cental, left, right, ...)
-- ODE solvers (Euler, ~~RK~~(done-ish), Adams, ...)
-- PDE solvers (Lax-Friedrichs, Lax-Wendoff, Upwind, ...)
-- Interpolators (some of these will support various ODE and PDE methods)
-- Linear algebra (from basic matrix ops to more advanced things, eigensystems and whatnot)
-- Check out [RPP](https://github.com/Rob-Rau/rpp) ~~Plotting (current lame implementation is based off plplot, want to roll my own)~~
+I also wanted to use D's type system to its fullest when performing
+matrix operations. This means emmiting compile errors when operating
+on incompatible matricies. The effect of this is that the matrix
+struct is a template that takes in its layout at compile time. This
+does have limitations, but is acceptable in many cases.
 
-## TODO:
-- ~~Make it easy to build and use.~~
-	- ~~Fix absolute path dependencies~~
-	- ~~Set up Cmake or some other build system~~
-	- I'm using dub now
-- Write some unit regression tests
-	- This is in preparation for TODO 5
-- Write basic matrix library
-	- Basic matrix object and ops (addition, multiplication, inverse)
-- Clean up optimization library to use the new matrix library
-	- Replace blas matrix function with new shiny objects.
-- Start implementing the above list in no particular order.
-	- With the rest in place this shouldn't be to hard....lol
+Further, I wanted to be able to use this library in a @nogc context.
+For small matricies, the data arrays is allocated on the stack. This
+gives a nice memory layout when there is an array of matricies or
+vectors. For larger matricies, the array is heap allocated using
+```std.experimental.allocator.mallocator``` and reference counted as
+the structure is passed around.
 
-## Dependencies:
-- cblas
-- scid
+Some basic usage:
+```D
+auto m1 = Matrix!(3, 2)(1, 2,
+                        3, 4,
+                        5, 6);
+
+auto m2 = Matrix!(2, 2)(7, 8,
+                        9, 10);
+auto m3 = m1*m2;
+writeln(m3);
+/+
+[  25  28 ]
+[  57  64 ]
+[  89 100 ]
++/
+```
+
+## Future
+Originally Numd was to be a complete numerical methods library.
+This original vision has not been lost but in order to reduce
+dependancies that made it somewhat difficult to get running on
+a few clusters, it has been stripped down to only include the
+matrix math library for now.
+
+The plan going forward is to move things from EbbCFD into Numd
+when they reach a stable level with an interface that I am happy
+with. The first things that will likely be brought over are the
+time integrators that EbbCFD uses. They currently have a specific
+interface to EbbCFD but this should be changing soon.

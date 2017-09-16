@@ -305,7 +305,7 @@ struct Matrix(size_t r, size_t c, T = double)
 					auto first = rref.mData[currRow*c + currCol];
 					row[] /= first;
 					//debug writeln("Normalizing row " ~ to!string(currRow));
-					//debug writeln(rref.ToString());
+					//debug writeln(rref.toString());
 				}
 				// Find all non-zero rows in this column and scale the current 
 				// row by the value in other row, then subtract current row from
@@ -321,7 +321,7 @@ struct Matrix(size_t r, size_t c, T = double)
 							auto first = rref.mData[j*c + currCol];
 							nextRow[] -= (first*row[])[];
 							//debug writeln("Subtracting row " ~ to!string(currRow) ~ " from " ~ to!string(j));
-							//debug writeln(rref.ToString());
+							//debug writeln(rref.toString());
 						}
 					}
 				}
@@ -346,7 +346,7 @@ struct Matrix(size_t r, size_t c, T = double)
 						swapRow[] = rref.mData[j*c..j*c+c];
 						rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
 						rref.mData[currRow*c..currRow*c+c] = swapRow[];
-						//debug writeln(rref.ToString());
+						//debug writeln(rref.toString());
 						break;
 					}
 					// All entries in this column are 0, move on
@@ -455,7 +455,7 @@ struct Matrix(size_t r, size_t c, T = double)
 
 							rref.mData[currRow*c..currRow*c+c] = swapRow[];
 							inv.mData[currRow*c..currRow*c+c] = invSwapRow[];
-							//debug writeln(rref.ToString());
+							//debug writeln(rref.toString());
 							break;
 						}
 						// All entries in this column are 0, move on
@@ -578,7 +578,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	@property size_t rows() { return r; };
 	@property size_t columns() { return c; };
 }
-	string ToString()
+	string toString()
 	{
 		import std.string;
 		string matStr;
@@ -637,13 +637,13 @@ unittest
 	//auto m2 = m1; // This doesn't work. copy ctor not called for some reason
 	assert(m1 == m2, "Matrix assignment test failed");
 
-	//writeln(m1.ToString());
-	//writeln(m2.ToString());
+	//writeln(m1.toString());
+	//writeln(m2.toString());
 	// Force failure
 	m1.mData[0] = 3;
 
-	//writeln(m1.ToString());
-	//writeln(m2.ToString());
+	//writeln(m1.toString());
+	//writeln(m2.toString());
 
 	assert(m1 != m2, "Matrix assignment test failed");
 }
@@ -813,7 +813,7 @@ unittest
 
 	auto m2 = m1.rref();
 
-	//writeln(m2.ToString());
+	//writeln(m2.toString());
 
 	auto expected1 = Matrix!(2, 2).Identity();
 
@@ -821,20 +821,20 @@ unittest
 
 	auto m3 = Matrix!(3, 3)(2, 4, 6, 8, 10, 12, 14, 16, 18);
 
-	//writeln(m3.ToString());
+	//writeln(m3.toString());
 
 	auto m4 = m3.rref();
 
 	auto expected2 = Matrix!(3, 3)(1, 0, -1, 0, 1, 2, 0, 0, 0);
 
-	//writeln(m4.ToString());
+	//writeln(m4.toString());
 
 	assert(m4 == expected2, "Matrix rref test failed");
 
 	auto m5 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
 	auto m6 = m5.rref();
 	auto expected3 = Matrix!(3, 3).Identity();
-	//writeln(m6.ToString());
+	//writeln(m6.toString());
 	assert(m6 == expected3, "Matrix rref test failed");
 
 	/*
@@ -845,20 +845,20 @@ unittest
 	auto m7 = Matrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
 	auto m8 = m7.rref();
 	auto expected4 = Matrix!(3, 3)(0, 1, 0, 0, 0, 1, 0, 0, 0);
-	//writeln(m8.ToString());
+	//writeln(m8.toString());
 	assert(m8 == expected4, "Matrix rref test failed");
 
 
 	auto m9 = Matrix!(3, 6)(0, 0, 2, 1, 0, 0, 0, 5, 1, 0, 1, 0, 6, 3, 1, 0, 0, 1);
 	auto m10 = m9.rref();
-	//writeln(m10.ToString());
+	//writeln(m10.toString());
 	/*
 	-0.0333   -0.1000    0.1667
 	-0.1000    0.2000        0
 	0.5000         0         0
 	*/
 	auto expected5 = Matrix!(3, 6)(1, 0, 0, -1.0/30.0, -1.0/10.0, 1.0/6.0, 0, 1, 0, -1.0/10.0, 1.0/5.0, 0, 0, 0, 1.0, 1.0/2.0, 0, 0);
-	//writeln(expected5.ToString());
+	//writeln(expected5.toString());
 	assert(m10 == expected5, "Matrix rref test failed");
 }
 
@@ -872,7 +872,7 @@ unittest
 	auto m1 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
 	auto m2 = m1.Inverse();
 	auto expected = Matrix!(3, 3)(-1.0/30.0, -1.0/10.0, 1.0/6.0, -1.0/10.0, 1.0/5.0, 0, 1.0/2.0, 0, 0);
-	//writeln(m2.ToString());
+	//writeln(m2.toString());
 	assert(m2 == expected, "Matrix inverse test failed");
 
 	auto m3 = Matrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
@@ -924,9 +924,9 @@ unittest
 unittest
 {
 	auto vec1 = Vector!(3)(1, 2, 3);
-	//writeln(vec1.ToString());
+	//writeln(vec1.toString());
 	auto vec2 = Vector!(3)(4, 5, 6);
-	//writeln(vec1.ToString());
+	//writeln(vec1.toString());
 	auto res = vec1.dot(vec2);
 	
 	double expected = 32;
