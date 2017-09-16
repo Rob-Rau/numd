@@ -7,7 +7,7 @@ Numd is currently just a matrix math library intended to support
 [EbbCFD](https://github.com/Rob-Rau/EbbCFD). It can perform basic
 matrix math operations in an intuitive API. It is not particularly
 fast or efficient but it does get the job done. More work on
-performance is intended (quite possible by utilizing
+performance is intended (quite possibly by utilizing
 [mir](https://github.com/libmir/mir))
 
 ## Usage
@@ -19,16 +19,21 @@ designing this library.
 
 I also wanted to use D's type system to its fullest when performing
 matrix operations. This means emmiting compile errors when operating
-on incompatible matricies. The effect of this is that the matrix
-struct is a template that takes in its layout at compile time. This
-does have limitations, but is acceptable in many cases.
+on incompatible matricies, not allowing certain functions to be called
+on matricies that cannot support them (e.g. inverse on non-square
+matricies, dot on non-vectors, and cross on non length 3 vectors).
+The effect of this is that the matrix struct is a template that takes
+in its layout at compile time. This does have limitations, but is
+acceptable in many cases.
 
 Further, I wanted to be able to use this library in a @nogc context.
-For small matricies, the data arrays is allocated on the stack. This
-gives a nice memory layout when there is an array of matricies or
-vectors. For larger matricies, the array is heap allocated using
-```std.experimental.allocator.mallocator``` and reference counted as
-the structure is passed around.
+All matrix operations are @nogc and the matrix object uses a statically
+allocated array for its underlying data. For a heap allocated matrix
+the aliases ```RMatrix``` and ```RVector``` provide easy heap matricies
+that use **ALMOST** the same semantics. However, because the
+```RefCounted``` wrapper has an ```opAssign```, when you assign one
+matrix to another, it only assigns a reference and does not copy the
+underlying data.
 
 Some basic usage:
 ```D
@@ -38,7 +43,7 @@ auto m1 = Matrix!(3, 2)(1, 2,
 
 auto m2 = Matrix!(2, 2)(7, 8,
                         9, 10);
-auto m3 = m1*m2;
+auto m3 = m1 * m2;
 writeln(m3);
 /+
 [  25  28 ]

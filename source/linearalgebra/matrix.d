@@ -7,112 +7,275 @@ import std.math;
 import std.stdio;
 import std.typecons;
 
+alias RMatrix(size_t r, size_t c, T = double) = RefCounted!(Matrix!(r, c, T));
+alias RVector(size_t l, T = double) = RefCounted!(Vector!(l, T));
+
+// opEquals
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 2)(25, 28,
+		57, 64,
+		89, 100);
+	auto m2 = RMatrix!(3, 2)(25, 28,
+		57, 64,
+		89, 100);
+	assert(m1 == m2, "Matrix equality test failed");
+}
+// identity matrix generation test.
+@nogc @system unittest
+{
+	auto ident = RMatrix!(3, 3).identity();
+	auto testIdent = RMatrix!(3, 3)(1, 0, 0, 0, 1, 0, 0, 0, 1);
+	assert(ident == testIdent, "RMatrix identity failed");
+}
+
+// opBinaryRight * (non square)
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	auto m2 = RMatrix!(2, 2)(7, 8,
+		9, 10);
+	auto m3 = m1 * m2;
+	auto expected = RMatrix!(3, 2)(25, 28,
+		57, 64,
+		89, 100);
+	assert(m3 == expected, "RMatrix opBinaryRight * test failed");
+}
+
+// opBinary * (square)
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(2, 2)(1, 2, 3, 4);
+	auto m2 = RMatrix!(2, 2)(5, 6, 7, 8);
+	auto m3 = RMatrix!(2, 2)(0);
+	m3 = m1*m2;
+	auto expected = RMatrix!(2, 2)(19, 22, 43, 50);
+	assert(m3 == expected, "RMatrix opBinary * test failed");
+}
+
+// opBinary * (non-square)
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(2, 3)(1, 2, 3, 4, 5, 6);
+	auto m2 = RMatrix!(3, 2)(5, 6, 7, 8,  9, 10);
+	auto m3 = RMatrix!(2, 2)(0);
+	m3 = m1*m2;
+	auto expected = RMatrix!(2, 2)(46, 52, 109, 124);
+	assert(m3 == expected, "RMatrix opBinary * test failed");
+}
+
+
+// op +
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	auto m2 = RMatrix!(3, 2)(2, 3,
+		4, 5,
+		6, 7);
+	auto m3 = m1 + m2;
+	auto expected = RMatrix!(3, 2)(3, 5,
+		7, 9,
+		11, 13);
+	assert(m3 == expected, "RMatrix addition test failed");
+}
+
+// op scalar *
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 2)(1, 2,
+		3, 4,
+		5, 6);
+	double scalar = 2;
+	auto m3 = scalar*m1;
+	auto expected = RMatrix!(3, 2)(2, 4,
+		6, 8,
+		10, 12);
+	assert(m3 == expected, "RMatrix scalar multiplication test failed");
+}
+
+// op scalar /
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 2)(2, 4,
+							6, 8,
+							10, 12);
+	double scalar = 2;
+	auto m2 = m1/scalar;
+	auto expected = RMatrix!(3, 2)(1, 2,
+								  3, 4,
+								  5, 6);
+	assert(m2 == expected, "RMatrix scalar division test failed");
+}
+
+// opUnary -
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 3)(1, 2, 3, 4, 5, 6, 7, 8, 9);
+	auto m2 = -m1;
+	auto expected = RMatrix!(3, 3)(-1, -2, -3, -4, -5, -6, -7, -8, -9);
+	assert(m2 == expected, "RMatrix negative test failed");
+}
+
+// op *=
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(2, 2)(1, 2, 3, 4);
+	m1 *= 2;
+	auto expected = RMatrix!(2, 2)(2, 4, 6, 8);
+	assert(m1 == expected, "RMatrix *= test failed");
+}
+
+// op +=
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(2, 2)(1, 2, 3, 4);
+	m1 += RMatrix!(2, 2).identity();
+	auto expected = RMatrix!(2, 2)(2, 2, 3, 5);
+	assert(m1 == expected, "RMatrix += test failed");
+}
+
+// transpose
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 3)(1, 2, 3, 4, 5, 6, 7, 8, 9);
+	auto m2 = m1.transpose();
+	/*
+	 1     4     7
+     2     5     8
+     3     6     9
+     */
+	auto expected1 = RMatrix!(3, 3)(1, 4, 7, 2, 5, 8, 3, 6, 9);
+
+	assert(m2 == expected1, "RMatrix transpose test failed");
+
+	auto m3 = RMatrix!(2, 3)(1, 2, 3, 4, 5, 6);
+	auto m4 = m3.transpose();
+	/*
+     1     4
+     2     5
+     3     6
+     */
+	auto expected2 = RMatrix!(3, 2)(1, 4, 2, 5, 3, 6);
+	assert(m4 == expected2, "RMatrix transpose test failed");
+}
+
+// Row reduction
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(2, 2)(2, 4, 6, 8);
+	auto m2 = m1.rref();
+	auto expected1 = RMatrix!(2, 2).identity();
+	assert(m2 == expected1, "RMatrix rref test failed");
+
+	auto m3 = RMatrix!(3, 3)(2, 4, 6, 8, 10, 12, 14, 16, 18);
+	auto m4 = m3.rref();
+	auto expected2 = RMatrix!(3, 3)(1, 0, -1, 0, 1, 2, 0, 0, 0);
+	assert(m4 == expected2, "RMatrix rref test failed");
+
+	auto m5 = RMatrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
+	auto m6 = m5.rref();
+	auto expected3 = RMatrix!(3, 3).identity();
+	assert(m6 == expected3, "RMatrix rref test failed");
+
+	/*
+	 0     4     5
+     0     0     7
+     0     3     1
+	*/
+	auto m7 = RMatrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
+	auto m8 = m7.rref();
+	auto expected4 = RMatrix!(3, 3)(0, 1, 0, 0, 0, 1, 0, 0, 0);
+	assert(m8 == expected4, "RMatrix rref test failed");
+
+
+	auto m9 = RMatrix!(3, 6)(0, 0, 2, 1, 0, 0, 0, 5, 1, 0, 1, 0, 6, 3, 1, 0, 0, 1);
+	auto m10 = m9.rref();
+	/*
+	-0.0333   -0.1000    0.1667
+	-0.1000    0.2000        0
+	0.5000         0         0
+	*/
+	auto expected5 = RMatrix!(3, 6)(1, 0, 0, -1.0/30.0, -1.0/10.0, 1.0/6.0, 0, 1, 0, -1.0/10.0, 1.0/5.0, 0, 0, 0, 1.0, 1.0/2.0, 0, 0);
+	assert(m10 == expected5, "RMatrix rref test failed");
+}
+
+@nogc @system unittest
+{
+	auto m1 = RMatrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
+	auto m2 = m1.inverse();
+	auto expected = RMatrix!(3, 3)(-1.0/30.0, -1.0/10.0, 1.0/6.0, -1.0/10.0, 1.0/5.0, 0, 1.0/2.0, 0, 0);
+	assert(m2 == expected, "RMatrix inverse test failed");
+
+	auto m3 = RMatrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
+	auto m4 = m3.inverse();
+	assert(m4.isNull, "RMatrix inverse test failed, should have been empty Nullable");
+}
+
+@nogc @system unittest
+{
+	auto vec = RVector!(3)(1.0, 1.0, 0.0);
+	auto mag = vec.magnitude();
+	auto expected = sqrt(cast(double)2);	
+	assert(mag == expected, "RVector magnitude test failed");
+}
+
+@nogc @system unittest
+{
+	auto vec1 = RVector!(3)(1, 1, 0);
+	auto vec2 = vec1.normalize();
+	auto expected = RVector!(3)(1.0/sqrt(2.0), 1.0/sqrt(2.0), 0);
+	assert(vec2 == expected, "RVector normalize test failed");
+}
+
+@nogc @system unittest
+{
+	auto vec1 = RVector!(3)(1, 2, 3);
+	auto vec2 = RVector!(3)(4, 5, 6);
+	auto res = vec1.dot(vec2);
+	double expected = 32;
+	assert(res == expected, "RVector dot product test failed");
+}
+
+@nogc @system unittest
+{
+	auto vec1 = RVector!(3)(1, 2, 3);
+	auto vec2 = RVector!(3)(4, 5, 6);
+	auto vec3 = vec1.cross(vec2);
+	auto expected = RVector!(3)(-3, 6, -3);
+	assert(vec3 == expected, "RVector cross product failed");
+}
+
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
 struct Matrix(size_t r, size_t c, T = double)
 {
-	import std.experimental.allocator.mallocator;
-
 	alias ThisType = Matrix!(r, c, T);
 
 @nogc
 {
-	// if matrix is small enough, stack allocate it.
-	static if(r*c*T.sizeof > 512)
+	T[r*c] mData;
+
+	this(const T[] values)
 	{
-		private int* referenceCount = null;
-		T[] mData;
-		
-		private void allocData()
-		{
-			mData = cast(T[])Mallocator.instance.allocate(r*c*T.sizeof);
-			referenceCount = cast(int*)Mallocator.instance.allocate(int.sizeof);
-			(*referenceCount) = 1;
-		}
-		
-		this(const T[] values)
-		{
-			if(referenceCount is null)
-			{
-				allocData();
-				mData[] = values[];
-			}
-			else
-			{
-				mData[] = values[];
-			}
-		}
-
-		this(this)
-		{
-			if(referenceCount !is null)
-			{
-				(*referenceCount)++;
-			}
-			else
-			{
-				//printf("Error Matrix referenceCount somehow null in postblit\n");
-			}
-		}
-
-		~this()
-		{
-			if(referenceCount !is null)
-			{
-				if((*referenceCount) == 1)
-				{
-					if(mData !is null)
-					{
-						Mallocator.instance.deallocate(mData);
-						mData = null;
-					}
-					Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
-				}
-				else if((*referenceCount) > 1)
-				{
-					(*referenceCount)--;
-				}
-				else if((*referenceCount) == 0)
-				{
-					Mallocator.instance.deallocate(referenceCount[0..int.sizeof]);
-				}
-			}
-			else
-			{
-				//printf("Error Matrix referenceCount somehow null in destructor\n");
-			}
-		}
-	}
-	else
-	{
-		T[r*c] mData;
-		
-		private void allocData()
-		{
-
-		}
-
-		this(const T[] values)
-		{
-			mData[] = values[];
-		}
+		mData[] = values[];
 	}
 	
 	this(T[r*c] values)
 	{
-		allocData();
 		mData[] = values;
 	}
 
 	this(immutable T[r*c] values...)
 	{
-		allocData();
 		mData[] = values;
 	}
 
 	this(double init)
 	{
-		allocData();
 		mData[] = init;
 	}
 
@@ -423,24 +586,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		}
 	}
 
-	static if(r*c*T.sizeof > 512)
-	{
-		ref ThisType opAssign(ThisType rhs)
-		{
-			if((referenceCount is null) && (rhs.referenceCount !is null))
-			{
-				referenceCount = rhs.referenceCount;
-				(*referenceCount)++;
-				mData = rhs.mData;
-			}
-			else
-			{
-				mData[] = rhs.mData[];
-			}
-			return this;
-		}
-	}
-
 	ref ThisType opAssign(const T[r*c] rhs)
 	{
 		mData[] = rhs[];
@@ -543,7 +688,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // opEquals
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 2)(25, 28,
 		57, 64,
@@ -555,7 +700,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // identity matrix generation test.
-@safe unittest
+@nogc @safe unittest
 {
 	auto ident = Matrix!(3, 3).identity();
 	auto testIdent = Matrix!(3, 3)(1, 0, 0, 0, 1, 0, 0, 0, 1);
@@ -563,7 +708,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // op =
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2,
 		3, 4);
@@ -577,7 +722,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // opBinaryRight * (non square)
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
@@ -592,7 +737,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // opBinary * (square)
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2, 3, 4);
 	auto m2 = Matrix!(2, 2)(5, 6, 7, 8);
@@ -603,7 +748,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // opBinary * (non-square)
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(2, 3)(1, 2, 3, 4, 5, 6);
 	auto m2 = Matrix!(3, 2)(5, 6, 7, 8,  9, 10);
@@ -615,7 +760,7 @@ struct Matrix(size_t r, size_t c, T = double)
 
 
 // op +
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
@@ -631,7 +776,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // op scalar *
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
@@ -645,7 +790,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // op scalar /
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 2)(2, 4,
 							6, 8,
@@ -659,7 +804,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // opUnary -
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 3)(1, 2, 3, 4, 5, 6, 7, 8, 9);
 	auto m2 = -m1;
@@ -668,7 +813,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // op *=
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2, 3, 4);
 	m1 *= 2;
@@ -677,7 +822,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // op +=
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2, 3, 4);
 	m1 += Matrix!(2, 2).identity();
@@ -686,7 +831,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // transpose
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 3)(1, 2, 3, 4, 5, 6, 7, 8, 9);
 	auto m2 = m1.transpose();
@@ -711,7 +856,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 
 // Row reduction
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(2, 2)(2, 4, 6, 8);
 	auto m2 = m1.rref();
@@ -750,7 +895,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	assert(m10 == expected5, "Matrix rref test failed");
 }
 
-@safe unittest
+@nogc @safe unittest
 {
 	auto m1 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
 	auto m2 = m1.inverse();
@@ -762,7 +907,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	assert(m4.isNull, "Matrix inverse test failed, should have been empty Nullable");
 }
 
-@safe unittest
+@nogc @safe unittest
 {
 	auto vec = Vector!(3)(1.0, 1.0, 0.0);
 	auto mag = vec.magnitude();
@@ -770,7 +915,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	assert(mag == expected, "Vector magnitude test failed");
 }
 
-@safe unittest
+@nogc @safe unittest
 {
 	auto vec1 = Vector!(3)(1, 1, 0);
 	auto vec2 = vec1.normalize();
@@ -778,7 +923,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	assert(vec2 == expected, "Vector normalize test failed");
 }
 
-@safe unittest
+@nogc @safe unittest
 {
 	auto vec1 = Vector!(3)(1, 2, 3);
 	auto vec2 = Vector!(3)(4, 5, 6);
@@ -787,7 +932,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	assert(res == expected, "Vector dot product test failed");
 }
 
-@safe unittest
+@nogc @safe unittest
 {
 	auto vec1 = Vector!(3)(1, 2, 3);
 	auto vec2 = Vector!(3)(4, 5, 6);
