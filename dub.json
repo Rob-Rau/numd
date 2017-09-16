@@ -4,10 +4,6 @@
 	"copyright": "Copyright © 2016, Robert F. Rau II",
 	"authors": ["Rob Rau"],
 	"targetType": "sourceLibrary",
-	"sourcePaths": [
-		"numd/linearalgebra"
-	],
-	"importPaths": ["./"],
 	"buildTypes": {
 		"unittest": {
 			"buildOptions": ["unittests", "debugMode", "debugInfo"]
