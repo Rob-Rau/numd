@@ -1,40 +1,11 @@
 ﻿module numd.linearalgebra.matrix;
 
+import numd.utility;
+
 import std.conv;
-import std.stdio;
 import std.math;
-import std.meta;
-import std.complex;
-import std.exception;
-
-struct Mcomplex(T)
-{
-	alias mData this;
-	Complex!T mData;
-	alias Mcomplex!T ThisType;
-
-	void opAssign(T rhs)
-	{
-		mData.re = rhs;
-	}
-
-	void opAssign(Complex!T rhs)
-	{
-		mData = rhs;
-	}
-
-	ThisType[] opBinary(string op)(ThisType[] rhs)
-	{
-		static if((op == "*") || (op == "-") || (op == "+") || (op == "/"))
-		{
-			ThisType[] res;
-			foreach(int i, ref ele; rhs)
-				mixin("res[i].mData = mData"~op~"ele;");
-
-			return res;
-		}
-	}
-}
+import std.stdio;
+import std.typecons;
 
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
@@ -142,14 +113,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	this(double init)
 	{
 		allocData();
-		static if(is(T : Mcomplex!double))
-		{
-			mData[] = Mcomplex!double(Complex!double(init));
-		}
-		else
-		{
-			mData[] = init;
-		}
+		mData[] = init;
 	}
 
 	ref T opIndex(size_t index)
@@ -231,17 +195,6 @@ struct Matrix(size_t r, size_t c, T = double)
 		else static assert(0, "Operator not implemented");
 	}
 
-	void mult(size_t ir, size_t ic, lhsType)(ref Matrix!(ir, ic, lhsType) rhs, ref Matrix!(ir, c, lhsType) output)
-	{
-		static assert(is (T : lhsType));
-		static assert(ic == r, "Incompatible matricies");
-
-		for(int i = 0; i < ir; i++)
-			for(int j = 0; j < c; j++)
-				for(int k = 0; k < ic; k++)
-					output.mData[i*c + j] += mData[ic*i + k]*rhs.mData[k*c + j];
-	}
-
 	Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(ref Matrix!(ir, ic, lhsType) lhs)
 	{
 		static assert(is (T : lhsType));
@@ -280,7 +233,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		for(int i = 0; i < r*c; i++)
 		{
-			if(mData[i] != o.mData[i])
+			if(abs(mData[i] - o.mData[i]) > fpTol)
 				return false;
 		}
 		return true;
@@ -288,7 +241,6 @@ struct Matrix(size_t r, size_t c, T = double)
 
 	ThisType rref()
 	{
-		//auto rref = new ThisType(mData);
 		auto rref = ThisType(mData);
 
 		int currRow = 0, currCol = 0;
@@ -304,8 +256,6 @@ struct Matrix(size_t r, size_t c, T = double)
 				{
 					auto first = rref.mData[currRow*c + currCol];
 					row[] /= first;
-					//debug writeln("Normalizing row " ~ to!string(currRow));
-					//debug writeln(rref.toString());
 				}
 				// Find all non-zero rows in this column and scale the current 
 				// row by the value in other row, then subtract current row from
@@ -320,8 +270,6 @@ struct Matrix(size_t r, size_t c, T = double)
 						{
 							auto first = rref.mData[j*c + currCol];
 							nextRow[] -= (first*row[])[];
-							//debug writeln("Subtracting row " ~ to!string(currRow) ~ " from " ~ to!string(j));
-							//debug writeln(rref.toString());
 						}
 					}
 				}
@@ -341,22 +289,18 @@ struct Matrix(size_t r, size_t c, T = double)
 					// Swap this row with current row
 					if(rref.mData[j*c + currCol] != 0)
 					{
-						//debug writeln("swapping row " ~ to!string(currRow) ~ " with " ~ to!string(j));
 						T[c] swapRow;
 						swapRow[] = rref.mData[j*c..j*c+c];
 						rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
 						rref.mData[currRow*c..currRow*c+c] = swapRow[];
-						//debug writeln(rref.toString());
 						break;
 					}
 					// All entries in this column are 0, move on
 					else if(j == r-1)
 					{
-						//currRow++;
 						currCol++;
 					}
 				}
-				//currCol++;
 			}
 		}
 		return rref;
@@ -380,7 +324,7 @@ struct Matrix(size_t r, size_t c, T = double)
 	// Things that only apply to squar matricies.
 	static if(c == r)
 	{
-		static ThisType Identity()
+		static ThisType identity()
 		{
 			auto ident = ThisType(0);
 			for(int i = 0; i < r*c; i += r+1)
@@ -390,21 +334,21 @@ struct Matrix(size_t r, size_t c, T = double)
 			return ident;
 		}
 
-		ThisType Inverse()
+		Nullable!ThisType inverse()
 		{
-			auto inv = Identity();
+			auto inv = identity();
 			auto rref = ThisType(mData);
 
 			int currRow = 0, currCol = 0;
 			while((currRow < r) && (currCol < c))
 			{
-				if(rref.mData[currRow*c + currCol] != 0)
+				if(abs(rref.mData[currRow*c + currCol]) > fpTol)
 				{
 					T[] row, invRow;
 					row = rref.mData[currRow*c..currRow*c+c];
 					invRow = inv.mData[currRow*c..currRow*c+c];
 					// Normalize row so first entry is 1
-					if(rref.mData[currRow*c + currCol] != 1)
+					if(abs(rref.mData[currRow*c + currCol] - 1) > fpTol)
 					{
 						auto first = rref.mData[currRow*c + currCol];
 						row[] /= first;
@@ -421,7 +365,7 @@ struct Matrix(size_t r, size_t c, T = double)
 							nextRow = rref.mData[j*c..j*c+c];
 							invNexRow = inv.mData[j*c..j*c+c];
 
-							if(rref.mData[j*c + currCol] != 0)
+							if(abs(rref.mData[j*c + currCol]) > fpTol)
 							{
 								auto first = rref.mData[j*c + currCol];
 								nextRow[] -= (first*row[])[];
@@ -443,9 +387,8 @@ struct Matrix(size_t r, size_t c, T = double)
 					for(int j = (currRow+1); j < r; j++)
 					{
 						// Swap this row with current row
-						if(rref.mData[j*c + currCol] != 0)
+						if(abs(rref.mData[j*c + currCol]) > fpTol)
 						{
-							//debug writeln("swapping row " ~ to!string(currRow) ~ " with " ~ to!string(j));
 							T[c] swapRow, invSwapRow;
 							swapRow[] = rref.mData[j*c..j*c+c];
 							invSwapRow[] = inv.mData[j*c..j*c+c];
@@ -455,7 +398,6 @@ struct Matrix(size_t r, size_t c, T = double)
 
 							rref.mData[currRow*c..currRow*c+c] = swapRow[];
 							inv.mData[currRow*c..currRow*c+c] = invSwapRow[];
-							//debug writeln(rref.toString());
 							break;
 						}
 						// All entries in this column are 0, move on
@@ -466,7 +408,18 @@ struct Matrix(size_t r, size_t c, T = double)
 					}
 				}
 			}
-			return inv;
+
+			import std.algorithm : fold;
+			auto allZeros = rref.mData[$-c..$].fold!((a, b) => (fabs(b) <= 1.0e-12) && a)(true);
+
+			if(allZeros)
+			{
+				return Nullable!ThisType();
+			}
+			else
+			{
+				return inv.nullable!ThisType;
+			}
 		}
 	}
 
@@ -563,16 +516,10 @@ struct Matrix(size_t r, size_t c, T = double)
 		
 		ThisType normalize()
 		{
-			//auto res = new Vector!(l, T);
 			auto res = Vector!(r, T)(0);
 			res.mData[] = mData[]/magnitude();
 			return res;
 		}
-	}
-
-	T[] getData()
-	{
-		return mData;
 	}
 
 	@property size_t rows() { return r; };
@@ -580,7 +527,7 @@ struct Matrix(size_t r, size_t c, T = double)
 }
 	string toString()
 	{
-		import std.string;
+		import std.string : rightJustify;
 		string matStr;
 		
 		for(int i = 0; i < r; i++)
@@ -595,193 +542,151 @@ struct Matrix(size_t r, size_t c, T = double)
 	}
 }
 
-static void WriteArrayCSV(size_t ri, size_t ci, T)(ref File f, Matrix!(ri, ci, T) x)
-{
-	for(int i = 0; i < x.mData.length-1; i++)
-		f.writef("%40.40f, ", x.mData[i]);
-
-	f.writef("%40.40f\n", x.mData[$-1]);
-}
-
 // opEquals
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 2)(25, 28,
 		57, 64,
 		89, 100);
-	
 	auto m2 = Matrix!(3, 2)(25, 28,
 		57, 64,
 		89, 100);
-	
 	assert(m1 == m2, "Matrix equality test failed");
 }
 
-// Identity matrix generation test.
-unittest
+// identity matrix generation test.
+@safe unittest
 {
-	auto ident = Matrix!(3, 3).Identity();
+	auto ident = Matrix!(3, 3).identity();
 	auto testIdent = Matrix!(3, 3)(1, 0, 0, 0, 1, 0, 0, 0, 1);
-
 	assert(ident == testIdent, "Matrix identity failed");
 }
 
 // op =
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2,
 		3, 4);
-
 	auto m2 = Matrix!(2, 2)(0);
 	m2 = m1;
-	//auto m2 = m1; // This doesn't work. copy ctor not called for some reason
 	assert(m1 == m2, "Matrix assignment test failed");
 
-	//writeln(m1.toString());
-	//writeln(m2.toString());
 	// Force failure
 	m1.mData[0] = 3;
-
-	//writeln(m1.toString());
-	//writeln(m2.toString());
-
 	assert(m1 != m2, "Matrix assignment test failed");
 }
 
 // opBinaryRight * (non square)
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
 		5, 6);
 	auto m2 = Matrix!(2, 2)(7, 8,
 		9, 10);
-
 	auto m3 = m1 * m2;
-	
 	auto expected = Matrix!(3, 2)(25, 28,
 		57, 64,
 		89, 100);
-	
 	assert(m3 == expected, "Matrix opBinaryRight * test failed");
 }
 
 // opBinary * (square)
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2, 3, 4);
 	auto m2 = Matrix!(2, 2)(5, 6, 7, 8);
 	auto m3 = Matrix!(2, 2)(0);
-
 	m3 = m1*m2;
-
 	auto expected = Matrix!(2, 2)(19, 22, 43, 50);
-
 	assert(m3 == expected, "Matrix opBinary * test failed");
 }
 
 // opBinary * (non-square)
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(2, 3)(1, 2, 3, 4, 5, 6);
 	auto m2 = Matrix!(3, 2)(5, 6, 7, 8,  9, 10);
 	auto m3 = Matrix!(2, 2)(0);
-	
 	m3 = m1*m2;
-
 	auto expected = Matrix!(2, 2)(46, 52, 109, 124);
-	
 	assert(m3 == expected, "Matrix opBinary * test failed");
 }
 
 
 // op +
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
 		5, 6);
-	
 	auto m2 = Matrix!(3, 2)(2, 3,
 		4, 5,
 		6, 7);
-	
 	auto m3 = m1 + m2;
-	
 	auto expected = Matrix!(3, 2)(3, 5,
 		7, 9,
 		11, 13);
-	
 	assert(m3 == expected, "Matrix addition test failed");
 }
 
 // op scalar *
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 2)(1, 2,
 		3, 4,
 		5, 6);
 	double scalar = 2;
-	
 	auto m3 = scalar*m1;
-	
 	auto expected = Matrix!(3, 2)(2, 4,
 		6, 8,
 		10, 12);
-	
 	assert(m3 == expected, "Matrix scalar multiplication test failed");
 }
 
 // op scalar /
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 2)(2, 4,
-		6, 8,
-		10, 12);
-	
+							6, 8,
+							10, 12);
 	double scalar = 2;
-	
-	auto m2 = m1/2;
-	
+	auto m2 = m1/scalar;
 	auto expected = Matrix!(3, 2)(1, 2,
-		3, 4,
-		5, 6);
-	
+								  3, 4,
+								  5, 6);
 	assert(m2 == expected, "Matrix scalar division test failed");
 }
 
 // opUnary -
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 3)(1, 2, 3, 4, 5, 6, 7, 8, 9);
 	auto m2 = -m1;
 	auto expected = Matrix!(3, 3)(-1, -2, -3, -4, -5, -6, -7, -8, -9);
-
 	assert(m2 == expected, "Matrix negative test failed");
 }
 
 // op *=
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2, 3, 4);
 	m1 *= 2;
 	auto expected = Matrix!(2, 2)(2, 4, 6, 8);
-
 	assert(m1 == expected, "Matrix *= test failed");
 }
 
 // op +=
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(2, 2)(1, 2, 3, 4);
-	m1 += Matrix!(2, 2).Identity();
+	m1 += Matrix!(2, 2).identity();
 	auto expected = Matrix!(2, 2)(2, 2, 3, 5);
-
 	assert(m1 == expected, "Matrix += test failed");
 }
 
 // transpose
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 3)(1, 2, 3, 4, 5, 6, 7, 8, 9);
 	auto m2 = m1.transpose();
@@ -806,35 +711,21 @@ unittest
 }
 
 // Row reduction
-unittest
+@safe unittest
 {
-
 	auto m1 = Matrix!(2, 2)(2, 4, 6, 8);
-
 	auto m2 = m1.rref();
-
-	//writeln(m2.toString());
-
-	auto expected1 = Matrix!(2, 2).Identity();
-
+	auto expected1 = Matrix!(2, 2).identity();
 	assert(m2 == expected1, "Matrix rref test failed");
 
 	auto m3 = Matrix!(3, 3)(2, 4, 6, 8, 10, 12, 14, 16, 18);
-
-	//writeln(m3.toString());
-
 	auto m4 = m3.rref();
-
 	auto expected2 = Matrix!(3, 3)(1, 0, -1, 0, 1, 2, 0, 0, 0);
-
-	//writeln(m4.toString());
-
 	assert(m4 == expected2, "Matrix rref test failed");
 
 	auto m5 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
 	auto m6 = m5.rref();
-	auto expected3 = Matrix!(3, 3).Identity();
-	//writeln(m6.toString());
+	auto expected3 = Matrix!(3, 3).identity();
 	assert(m6 == expected3, "Matrix rref test failed");
 
 	/*
@@ -845,103 +736,62 @@ unittest
 	auto m7 = Matrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
 	auto m8 = m7.rref();
 	auto expected4 = Matrix!(3, 3)(0, 1, 0, 0, 0, 1, 0, 0, 0);
-	//writeln(m8.toString());
 	assert(m8 == expected4, "Matrix rref test failed");
 
 
 	auto m9 = Matrix!(3, 6)(0, 0, 2, 1, 0, 0, 0, 5, 1, 0, 1, 0, 6, 3, 1, 0, 0, 1);
 	auto m10 = m9.rref();
-	//writeln(m10.toString());
 	/*
 	-0.0333   -0.1000    0.1667
 	-0.1000    0.2000        0
 	0.5000         0         0
 	*/
 	auto expected5 = Matrix!(3, 6)(1, 0, 0, -1.0/30.0, -1.0/10.0, 1.0/6.0, 0, 1, 0, -1.0/10.0, 1.0/5.0, 0, 0, 0, 1.0, 1.0/2.0, 0, 0);
-	//writeln(expected5.toString());
 	assert(m10 == expected5, "Matrix rref test failed");
 }
 
-unittest
-{
-	auto m1 = Matrix!(3, 3, Mcomplex!double)();
-}
-
-unittest
+@safe unittest
 {
 	auto m1 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
-	auto m2 = m1.Inverse();
+	auto m2 = m1.inverse();
 	auto expected = Matrix!(3, 3)(-1.0/30.0, -1.0/10.0, 1.0/6.0, -1.0/10.0, 1.0/5.0, 0, 1.0/2.0, 0, 0);
-	//writeln(m2.toString());
 	assert(m2 == expected, "Matrix inverse test failed");
 
 	auto m3 = Matrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
-	Matrix!(3,3) m4;
-	try
-	{
-		m4 = m3.Inverse();
-		assert(false, "Matrix inverse test failed");
-	}
-	catch(Exception e)
-	{
-		writeln(e.msg);
-	}
+	auto m4 = m3.inverse();
+	assert(m4.isNull, "Matrix inverse test failed, should have been empty Nullable");
 }
 
-unittest
-{
-	/+
-	auto m1 = Matrix!(3, 3)(0, 0, 2, 0, 5, 1, 6, 3, 1);
-	auto m2 = Matrix!(3, 3)(0, 1, 2, 0, 5, 1, 4, 3, 1);
-
-	m2.swap(m1);
-
-	assert(m1.mData[1] == 1, "Matrix swap failed");
-	assert(m2.mData[1] == 0, "Matrix swap failed");
-	assert(m1.mData[6] == 4, "Matrix swap failed");
-	assert(m2.mData[6] == 6, "Matrix swap failed");
-	+/
-}
-
-unittest
+@safe unittest
 {
 	auto vec = Vector!(3)(1.0, 1.0, 0.0);
 	auto mag = vec.magnitude();
-	auto expected = sqrt(cast(double)2);
-	
+	auto expected = sqrt(cast(double)2);	
 	assert(mag == expected, "Vector magnitude test failed");
 }
 
-unittest
+@safe unittest
 {
 	auto vec1 = Vector!(3)(1, 1, 0);
 	auto vec2 = vec1.normalize();
 	auto expected = Vector!(3)(1.0/sqrt(2.0), 1.0/sqrt(2.0), 0);
-	
 	assert(vec2 == expected, "Vector normalize test failed");
 }
 
-unittest
+@safe unittest
 {
 	auto vec1 = Vector!(3)(1, 2, 3);
-	//writeln(vec1.toString());
 	auto vec2 = Vector!(3)(4, 5, 6);
-	//writeln(vec1.toString());
 	auto res = vec1.dot(vec2);
-	
 	double expected = 32;
-	
 	assert(res == expected, "Vector dot product test failed");
 }
 
-unittest
+@safe unittest
 {
 	auto vec1 = Vector!(3)(1, 2, 3);
 	auto vec2 = Vector!(3)(4, 5, 6);
-	
 	auto vec3 = vec1.cross(vec2);
-	
 	auto expected = Vector!(3)(-3, 6, -3);
-	
 	assert(vec3 == expected, "Vector cross product failed");
 }
