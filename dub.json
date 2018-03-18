@@ -8,6 +8,36 @@
 		"unittest": {
 			"buildOptions": ["unittests", "debugMode", "debugInfo"]
 		},
+		"unittest-release": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-mcpu=native"],
+			"dflags-ldc": ["-enable-cross-module-inlining", "-ffast-math", "-linker=gold", "-flto=full"]
+		},
+		"unittest-release-avx2": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags-dmd": ["-mcpu=avx2"],
+			"dflags-ldc": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,+avx2", "-linker=gold", "-flto=full"]
+		},
+		"unittest-release-scalar": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags-ldc": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-linker=gold", "-flto=full", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,-avx2,-avx"]
+		},
+		"unittest-ldc-release-fastmath-avx2": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,+avx2"]
+		},
+		"unittest-ldc-release-fastmath-avx512": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-mcpu=native", "-mattr=+avx512f,+avx512dq,+avx512cd,+avx512bw,+avx512vl,+avx2"]
+		},
+		"unittest-ldc-release-avx2": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,+avx2"]
+		},
+		"unittest-ldc-release-avx512": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-mcpu=native", "-mattr=+avx512f,+avx512dq,+avx512cd,+avx512bw,+avx512vl,+avx2"]
+		},
 		"ldc-release": {
 			"buildOptions": ["releaseMode", "inline"],
 			"dflags": ["-O3", "-enable-cross-module-inlining"]
