@@ -16,7 +16,7 @@ unittest
 {
 	immutable size_t arraySize = 10_000_000;
 	//immutable size_t arraySize = 10000;
-	immutable size_t vecSize = 4;
+	immutable size_t vecSize = 5;
 	auto n0 = new double[arraySize];
 	n0[] = 0.5;
 	auto n1 = new double[arraySize];
@@ -43,8 +43,7 @@ unittest
 			flux[i..sliceEnd] = n0[i..sliceEnd]*G0 + n1[i..sliceEnd]*G1 + n0[i..sliceEnd]*G1 + n1[i..sliceEnd]*G0 + n0[i..sliceEnd]*(G0 + G1);
 		}+/
 
-		
-		immutable size_t chunkSize = 150;
+		immutable size_t chunkSize = 136;
 		for(size_t i = 0; i < flux.length; i += chunkSize)
 		{
 			size_t sliceEnd = i + chunkSize > flux.length ? flux.length : i+chunkSize;
@@ -55,7 +54,11 @@ unittest
 
 			auto G0 = A00*dqdx[i..sliceEnd] + A01*dqdy[i..sliceEnd];
 			auto G1 = A10*dqdx[i..sliceEnd] + A11*dqdy[i..sliceEnd];
-			flux[i..sliceEnd] = n0[i..sliceEnd]*G0 + n1[i..sliceEnd]*G1 + n0[i..sliceEnd]*G1 + n1[i..sliceEnd]*G0 + n0[i..sliceEnd]*(G0 + G1);
+
+			auto G2 = A00*dqdy[i..sliceEnd] + A01*dqdx[i..sliceEnd];
+			auto G3 = A10*dqdy[i..sliceEnd] + A11*dqdx[i..sliceEnd];
+
+			flux[i..sliceEnd] = n0[i..sliceEnd]*G0 + n1[i..sliceEnd]*G1 + n0[i..sliceEnd]*G1 + n1[i..sliceEnd]*G0 + n0[i..sliceEnd]*(G2 + G3) - n1[i..sliceEnd]*(G2 - G3);
 		}
 		/+
 		auto A00 = dqdy*dqdx.transpose;
@@ -76,20 +79,20 @@ unittest
 
 	auto dqdxo = new Vector!vecSize[arraySize];//, 0.1);
 	auto dqdyo = new Vector!vecSize[arraySize];//, 1.0);
-	auto A00o = new Matrix!(vecSize, vecSize)[arraySize];//, 2.0);
-	auto A01o = new Matrix!(vecSize, vecSize)[arraySize];//, 3.0);
-	auto A10o = new Matrix!(vecSize, vecSize)[arraySize];//, 4.0);
-	auto A11o = new Matrix!(vecSize, vecSize)[arraySize];//, 5.0);
+	//auto A00o = new Matrix!(vecSize, vecSize)[arraySize];//, 2.0);
+	//auto A01o = new Matrix!(vecSize, vecSize)[arraySize];//, 3.0);
+	//auto A10o = new Matrix!(vecSize, vecSize)[arraySize];//, 4.0);
+	//auto A11o = new Matrix!(vecSize, vecSize)[arraySize];//, 5.0);
 	auto fluxo = new Vector!vecSize[arraySize];//, 5.0);
 
 	for(size_t i = 0; i < arraySize; i++)
 	{
 		dqdxo[i] = 0.1;
 		dqdyo[i] = 1.0;
-		A00o[i] = 2;
-		A01o[i] = 3;
-		A10o[i] = 4;
-		A11o[i] = 5;
+		//A00o[i] = 2;
+		//A01o[i] = 3;
+		//A10o[i] = 4;
+		//A11o[i] = 5;
 		fluxo[i] = 5;
 	}
 
@@ -107,7 +110,11 @@ unittest
 			auto A11 = dqdxo[i]*dqdyo[i].transpose;
 			auto G0 = A00*dqdxo[i] + A01*dqdyo[i];
 			auto G1 = A10*dqdxo[i] + A11*dqdyo[i];
-			fluxo[i] = n0[i]*G0 + n1[i]*G1 + n0[i]*G1 + n1[i]*G0 + n0[i]*(G0 + G1);
+
+			auto G2 = A00*dqdyo[i] + A01*dqdxo[i];
+			auto G3 = A10*dqdyo[i] + A11*dqdxo[i];
+
+			fluxo[i] = n0[i]*G0 + n1[i]*G1 + n0[i]*G1 + n1[i]*G0 + n0[i]*(G2 + G3) - n1[i]*(G2 - G3);
 			//fluxo[i] = n0[i]*G0 + n1[i]*G1;
 			//pragma(msg, typeof(A00));
 			//fluxo[i] = A00*dqdyo[i];
@@ -524,7 +531,6 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 	{
 		assert(this.length == inRhs.length, "Matrix arrays are not the same size");
 		@nogc static immutable(string) comp(string cop, uint level, string i, string j, string[] args, string range, string destSize)(){
-			//mixin("return \""~operation!(cop, level+1, i, j, args, range, destRange)~"\"~"~q{"\ntemp["~destRange~"] "~op~"= finalResult.args["}~"~\""~to!string(this.args.length)~"\"~"~q{"].q"~i~j~"["~range~"];"}~";");
 			debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
 			enum string nextLevel = (level+1).to!string;
 			enum string code = `
@@ -538,7 +544,6 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 				";
 			`;
 			mixin(code);
-			//mixin("return \""~operation!(cop, level+1, i, j, args[0..this.args.length], range, destRange)~"\"~"~q{"\ntemp["~destRange~"] "~op~"= finalResult.args["}~"~\""~args[$-1]~"\"~"~q{"].q"~i~j~"["~range~"];"}~";");
 		}
 
 		return MatrixArrayResult!(r, c, T, comp, Args, MatrixArray!(r, c, T))(tuple(this.args.expand, cast(MatrixArray!(r, c, T))inRhs));
@@ -564,8 +569,6 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 				";
 			`;
 			debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
-			//debug pragma(msg, "args = "~args.join(",")~" this.args.length = "~this.args.length.to!string~" rhs.args.length = "~inRhs.args.length.to!string);
-			//debug pragma(msg, code~"\n");
 			mixin(code);
 		}
 
@@ -767,12 +770,11 @@ struct MatrixArray(size_t r, size_t c, T = double)
 					iterations = finalResult.length/stride16;
 					remaining = finalResult.length%stride16;
 					//debug assumeNogc!writeln("iterations: ", iterations, " remaining: ", remaining);
-					
+					/+
 					while(iterations)
 					{
 						T[stride16] temp0;
 						debug pragma(msg, "finalResult.args.length = "~finalResult.args.length.to!string);
-						//enum string code = operation!("=", 0, to!string(i), to!string(j), iota(0, finalResult.args.length).map!(a => a.to!string).array, "k..k+"~to!string(stride16), "0.."~to!string(stride16));
 						enum string code = operation!("=", 0, to!string(i), to!string(j), iota(0, finalResult.args.length).map!(a => a.to!string).array, "k..k+"~to!string(stride16), to!string(stride16));
 						debug pragma(msg, code);
 						mixin(code);
@@ -780,9 +782,9 @@ struct MatrixArray(size_t r, size_t c, T = double)
 						iterations--;
 						k+=stride16;
 					}
-					/+
+					
 					if(remaining > stride8)
-					{
+					{+/
 						iterations = finalResult.length/stride8;
 						remaining = finalResult.length%stride8;
 						while(iterations)
@@ -795,7 +797,7 @@ struct MatrixArray(size_t r, size_t c, T = double)
 							iterations--;
 							k+=stride8;
 						}
-					}
+					/+}
 
 					if(remaining > stride4)
 					{
@@ -827,8 +829,8 @@ struct MatrixArray(size_t r, size_t c, T = double)
 							iterations--;
 							k+=stride2;
 						}
-					}
-					+/
+					}+/
+					
 					while(remaining)
 					{
 						T[1] temp0;
@@ -889,7 +891,9 @@ struct MatrixArray(size_t r, size_t c, T = double)
 				enum string code = `
 					return "
 						temp`~level.to!string~`[] `~cop~` finalResult.args[`~args[0]~`].q`~i~`0[`~range~`] `~op~` finalResult.args[`~args[1]~`].q0`~j~`[`~range~`];
-						`~iota(1, c).map!(a => "\ntemp"~level.to!string~"[] += finalResult.args["~args[0]~"].q"~i~to!string(a)~"["~range~"] "~op~" finalResult.args["~args[1]~"].q"~to!string(a)~j~"["~range~"];").join~`
+						`~iota(1, c).map!(
+							a => "\ntemp"~level.to!string~"[] += finalResult.args["~args[0]~"].q"~i~to!string(a)~"["~range~"] "~op~" finalResult.args["~args[1]~"].q"~to!string(a)~j~"["~range~"];"
+						).join~`
 					";
 				`;
 				debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
@@ -908,7 +912,9 @@ struct MatrixArray(size_t r, size_t c, T = double)
 				enum string code = `
 					return "
 						temp`~level.to!string~`[] `~cop~` finalResult.args[`~args[0]~`].q`~i~`0[`~range~`] `~op~` finalResult.args[`~args[1]~`].q0`~j~`[`~range~`];
-						`~iota(1, c).map!(a => "\ntemp"~level.to!string~"[] += finalResult.args["~args[0]~"].q"~i~to!string(a)~"["~range~"] "~op~" finalResult.args["~args[1]~"].q"~to!string(a)~j~"["~range~"];").join~`
+						`~iota(1, c).map!(
+							a => "\ntemp"~level.to!string~"[] += finalResult.args["~args[0]~"].q"~i~to!string(a)~"["~range~"] "~op~" finalResult.args["~args[1]~"].q"~to!string(a)~j~"["~range~"];"
+						).join~`
 					";
 				`;
 				//pragma(msg, code);
@@ -918,28 +924,6 @@ struct MatrixArray(size_t r, size_t c, T = double)
 			return MatrixArrayResult!(r, ic, T, comp, ThisType, MatrixArray!(c, ic, T))(tuple(this, cast(MatrixArray!(c, ic, T))inRhs));
 		}
 
-		/+
-		@trusted auto opBinary(string op)(ref inout T[] inRhs)
-			if(op == "*")
-		{
-			assert(this.length == inRhs.length, "Matrix arrays are not the same size");
-			pragma(inline, true)
-			static void comp(string cop, uint level, size_t i, size_t j)(ref ThisType dest, ThisType lhs, typeof(inRhs) rhs) {
-				pragma(inline, true)
-				mixin("dest.q"~i.to!string~j.to!string~"[] = lhs.q"~i.to!string~j.to!string~"[] * rhs[];");
-			}
-			return MatrixArrayResult!(ThisType, typeof(inRhs), r, c, T, comp)(this, inRhs);
-		}
-
-		@trusted auto opBinary(string op)(inout T inRhs)
-			if(op == "*" || op == "/")
-		{
-			static void comp(string cop, uint level, size_t i, size_t j)(ref ThisType dest, ThisType lhs, typeof(inRhs) rhs) {
-				mixin("dest.q"~i.to!string~j.to!string~"[] = lhs.q"~i.to!string~j.to!string~"[] "~op~" rhs;");
-			}
-			return MatrixArrayResult!(ThisType, typeof(inRhs), r, c, T, comp)(this, inRhs);
-		}
-		+/
 		@trusted auto opBinaryRight(string op)(inout T inLhs)
 			if(op == "*" || op == "/")
 		{
@@ -955,17 +939,6 @@ struct MatrixArray(size_t r, size_t c, T = double)
 
 			return MatrixArrayResult!(r, c, T, comp, T, ThisType)(tuple(cast(T)inLhs, this));
 		}
-		/+
-		@trusted auto opBinaryRight(string op)(ref inout T[] inLhs)
-			if(op == "*")
-		{
-			assert(this.length == inLhs.length, "Matrix arrays are not the same size");
-			static void comp(string cop, uint level, size_t i, size_t j)(ref ThisType dest, T[] lhs, ThisType rhs) {
-				mixin("dest.q"~i.to!string~j.to!string~"[] = lhs[] * rhs.q"~i.to!string~j.to!string~"[];");
-			}
-			return MatrixArrayResult!(T[], ThisType, r, c, T, comp)(cast(T[])inLhs, this);
-		}
-		+/
 
 		void opOpAssign(string op, alias operation, Args...)(MatrixArrayResult!(r, c, T, operation, Args) finalResult)
 			if((op == "+") || (op == "-"))
