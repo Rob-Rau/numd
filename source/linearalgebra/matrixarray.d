@@ -21,6 +21,7 @@ unittest
 	n0[] = 0.5;
 	auto n1 = new double[arraySize];
 	n1[] = 0.5;
+	auto Q = VectorArray!vecSize(arraySize, 1.0);
 	auto dqdx = VectorArray!vecSize(arraySize, 0.1);
 	auto dqdy = VectorArray!vecSize(arraySize, 1.0);
 	//auto A00 = MatrixArray!(vecSize, vecSize)(arraySize, 2.0);
@@ -28,6 +29,12 @@ unittest
 	//auto A10 = MatrixArray!(vecSize, vecSize)(arraySize, 4.0);
 	//auto A11 = MatrixArray!(vecSize, vecSize)(arraySize, 5.0);
 	auto flux = VectorArray!vecSize(arraySize, 5.0);
+
+	/+
+	zip(Q, gradMat, indicies).map!((a) {
+		//auto dq = a[2].map!()
+	});
+	+/
 
 	@nogc diffuseFlux()
 	{
@@ -114,7 +121,7 @@ unittest
 			auto G2 = A00*dqdyo[i] + A01*dqdxo[i];
 			auto G3 = A10*dqdyo[i] + A11*dqdxo[i];
 
-			fluxo[i] = n0[i]*G0 + n1[i]*G1 + n0[i]*G1 + n1[i]*G0 + n0[i]*(G2 + G3) - n1[i]*(G2 - G3);
+			fluxo[i] = n0[i]*G0 + n1[i]*G1 + n0 [i]*G1 + n1[i]*G0 + n0[i]*(G2 + G3) - n1[i]*(G2 - G3);
 			//fluxo[i] = n0[i]*G0 + n1[i]*G1;
 			//pragma(msg, typeof(A00));
 			//fluxo[i] = A00*dqdyo[i];
@@ -797,7 +804,7 @@ struct MatrixArray(size_t r, size_t c, T = double)
 							iterations--;
 							k+=stride8;
 						}
-					/+}
+					//}
 
 					if(remaining > stride4)
 					{
@@ -829,7 +836,7 @@ struct MatrixArray(size_t r, size_t c, T = double)
 							iterations--;
 							k+=stride2;
 						}
-					}+/
+					}
 					
 					while(remaining)
 					{
