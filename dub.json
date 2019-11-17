@@ -22,6 +22,10 @@
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
 			"dflags-ldc": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-linker=gold", "-flto=full", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,-avx2,-avx"]
 		},
+		"unittest-ldc-release-fastmath-avx": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,-avx2,+avx"]
+		},
 		"unittest-ldc-release-fastmath-avx2": {
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
 			"dflags": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,+avx2"]
@@ -30,13 +34,17 @@
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
 			"dflags": ["-O3", "-enable-cross-module-inlining", "-ffast-math", "-mcpu=native", "-mattr=+avx512f,+avx512dq,+avx512cd,+avx512bw,+avx512vl,+avx2"]
 		},
+		"unittest-ldc-release-avx": {
+			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,-avx2,+avx", "--mixin=comp_mixin.d"]
+		},
 		"unittest-ldc-release-avx2": {
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
-			"dflags": ["-O3", "-enable-cross-module-inlining", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,+avx2"]
+			"dflags": ["-O3", "-enable-cross-module-inlining", "-mcpu=native", "-mattr=-avx512f,-avx512dq,-avx512cd,-avx512bw,-avx512vl,+avx2", "--mixin=comp_mixin.d"]
 		},
 		"unittest-ldc-release-avx512": {
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
-			"dflags": ["-O3", "-enable-cross-module-inlining", "-mcpu=native", "-mattr=+avx512f,+avx512dq,+avx512cd,+avx512bw,+avx512vl,+avx2"]
+			"dflags": ["--O3", "-enable-cross-module-inlining", "-mcpu=native", "--mattr=+avx512f,+avx512dq,+avx512cd,+avx512bw,+avx512vl,+avx2", "--mixin=comp_mixin.d"]
 		},
 		"ldc-release": {
 			"buildOptions": ["releaseMode", "inline"],

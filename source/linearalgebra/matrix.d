@@ -10,7 +10,7 @@ import std.stdio;
 import std.traits;
 import std.typecons;
 
-alias RMatrix(size_t r, size_t c, T = double) = RefCounted!(Matrix!(r, c, T));
+/+alias RMatrix(size_t r, size_t c, T = double) = RefCounted!(Matrix!(r, c, T));
 alias RVector(size_t l, T = double) = RefCounted!(Vector!(l, T));
 
 // opEquals
@@ -252,7 +252,7 @@ alias RVector(size_t l, T = double) = RefCounted!(Vector!(l, T));
 	auto expected = RVector!(3)(-3, 6, -3);
 	assert(vec3 == expected, "RVector cross product failed");
 }
-
++/
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
 struct Matrix(size_t r, size_t c, T = double)
