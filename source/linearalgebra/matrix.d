@@ -10,7 +10,8 @@ import std.stdio;
 import std.traits;
 import std.typecons;
 
-/+alias RMatrix(size_t r, size_t c, T = double) = RefCounted!(Matrix!(r, c, T));
+/+
+alias RMatrix(size_t r, size_t c, T = double) = RefCounted!(Matrix!(r, c, T));
 alias RVector(size_t l, T = double) = RefCounted!(Vector!(l, T));
 
 // opEquals
@@ -278,7 +279,7 @@ struct Matrix(size_t r, size_t c, T = double)
 		mData[] = values;
 	}
 
-	this(double init)
+	this(T init)
 	{
 		mData[] = init;
 	}
@@ -682,11 +683,20 @@ struct Matrix(size_t r, size_t c, T = double)
 		
 		T magnitude()
 		{
+			static assert(isNumeric!T, "T is not a numeric type.");
+
 			T res = 0;
 			foreach(ref element; mData)
 				res += element^^2;
 			
-			res = sqrt(res);
+			static if(isFloatingPoint!T) {
+				res = sqrt(res);
+			} else static if(isIntegral!T) {
+				// cast to double if we are not a floating point type and round result.
+				res = cast(T)round(sqrt(cast(double)res));
+			} else {
+				res = cast(T)sqrt(cast(double)res);
+			}
 			return res;
 		}
 		

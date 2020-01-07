@@ -541,30 +541,56 @@ struct ScalarArray(T = double, uint line = __LINE__, string file = __FILE__) {
 	alias ThisType = typeof(this);
 
 	enum string id = to!string(ThisType.mangleof.hashOf);
+	//pragma(msg, "array id (str): "~ThisType.mangleof);
+	//pragma(msg, "array id: "~id.to!string);
 
 	T[] data;
 	alias data this;
 	
-	this(size_t arraySize) {
+	@trusted this(size_t arraySize) {
 		data = new T[arraySize];
 	}
 
-	this(size_t arraySize, T initialValue) {
+	@trusted this(size_t arraySize, T initialValue) {
 		data = new T[arraySize];
 		data[] = initialValue;
 	}
 
-	@nogc private this(T[] _data) {
-		data = _data;
+	@nogc {
+		@trusted private this(T[] _data) {
+			data = _data;
+		}
+
+		/+@trusted auto opBinary(string op, uint line, string file)(ref inout ScalarArray!(T, line, file) inRhs)
+			if(op == "+" || op == "-")
+		{
+
+			alias InType = ScalarArray!(T, line, file);
+			assert(this.length == inRhs.length, "Scalar arrays are not the same size");
+			
+			@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
+				enum string code = `return "T[`
+					~destSize~`] temp_`~resultId~`_`~i~j~` = finalResult.args.arg`~ThisType.id~`.data[`~range~`] `~op~` finalResult.args.arg`~InType.id~`.data[`~range~`];\n";`;
+				mixin(code);
+			}
+			return MatrixArrayResult!(r, c, T, computationFunc, ThisType, InType, ThisType, InType)(tuple(this, cast(InType)inRhs));
+		}+/
+
+		/+@trusted auto opBinary(string op, uint line, string file)(ScalarArray!(T, line, file) inRhs)
+			if(op == "+" || op == "-")
+		{
+
+			alias InType = ScalarArray!(T, line, file);
+			assert(this.length == inRhs.length, "Scalar arrays are not the same size");
+			
+			@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
+				enum string code = `return "T[`
+					~destSize~`] temp_`~resultId~`_`~i~j~` = finalResult.args.arg`~ThisType.id~`.data[`~range~`] `~op~` finalResult.args.arg`~InType.id~`.data[`~range~`];\n";`;
+				mixin(code);
+			}
+			return MatrixArrayResult!(r, c, T, computationFunc, ThisType, InType, ThisType, InType)(tuple(this, cast(InType)inRhs));
+		}+/
 	}
-
-	/+ref T[] opSlice() {
-		return data;
-	}+/
-
-	/+@trusted @nogc auto slice(size_t first, size_t last) {
-		return ThisType(data[first..last]);
-	}+/
 }
 
 
@@ -576,7 +602,7 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 	alias _lhsId = RhsType;
 	alias _rhsId = LhsType;
 
-	pragma(msg, "array result id: "~id.to!string);
+	//pragma(msg, "array result id: "~id.to!string);
 
 	mixin(buildArgTuple!Args);
 	
@@ -643,7 +669,6 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 			mixin(code);
 		}
 
-		//return MatrixArrayResult!(r, ic, T, comp, ThisType, InType NoDuplicates!(AliasSeq!(Args, InType)))(tuple(this.args.expand, cast(InType)inRhs));
 		alias FilteredArgs = NoDuplicates!(AliasSeq!(Args, InType));
 		static if(FilteredArgs.length == AliasSeq!(Args).length)
 		{
@@ -663,7 +688,33 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 		assert(this.length == inRhs.length, "Matrix arrays are not the same size");
 
 		@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
-			debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
+			//debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
+			enum string code = `return "`
+					~operation!(ThisType.id, i, j, range, destSize)~
+					`T[`~destSize~`] temp_`~resultId~`_`~i~j~` = temp_`~ThisType.id~`_`~i~j~`[] `~op~` finalResult.args.arg`~InType.id~`.q`~i~j~`[`~range~`];\n";`;
+			mixin(code);
+		}
+
+		alias FilteredArgs = NoDuplicates!(AliasSeq!(Args, InType));
+		static if(FilteredArgs.length == AliasSeq!(Args).length)
+		{
+			// Input matrix array is already in our argument list
+			return MatrixArrayResult!(r, c, T, comp, ThisType, InType, FilteredArgs)(mixin(buildArgTupleConstructor!(FilteredArgs))(this.args.expand));
+		}
+		else
+		{
+			return MatrixArrayResult!(r, c, T, comp, ThisType, InType, FilteredArgs)(mixin(buildArgTupleConstructor!(FilteredArgs))(this.args.expand, cast(InType)inRhs));
+		}
+	}
+
+	@trusted @nogc auto opBinary(string op, uint line, string file)(inout MatrixArray!(r, c, T, line, file) inRhs)
+		if((op == "+") || (op == "-"))
+	{
+		alias InType = MatrixArray!(r, c, T, line, file);
+		assert(this.length == inRhs.length, "Matrix arrays are not the same size");
+
+		@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
+			//debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
 			enum string code = `return "`
 					~operation!(ThisType.id, i, j, range, destSize)~
 					`T[`~destSize~`] temp_`~resultId~`_`~i~j~` = temp_`~ThisType.id~`_`~i~j~`[] `~op~` finalResult.args.arg`~InType.id~`.q`~i~j~`[`~range~`];\n";`;
@@ -749,7 +800,7 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 		assert(this.length == inLhs.length, "Scalar and matrix arrays are not the same size");
 
 		@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
-			debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
+			//debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
 			enum string code = `return "`
 					~operation!(ThisType.id, i, j, range, destSize)~
 					`T[`~destSize~`] temp_`~resultId~`_`~i~j~` = temp_`~ThisType.id~`_`~i~j~`[] `~op~` finalResult.args.arg`~InType.id~`[`~range~`];\n";`;
@@ -776,7 +827,7 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 		assert(this.length == inLhs.length, "Scalar and matrix arrays are not the same size");
 
 		@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
-			debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
+			//debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
 			enum string code = `return "`
 					~operation!(ThisType.id, i, j, range, destSize)~
 					`T[`~destSize~`] temp_`~resultId~`_`~i~j~` = temp_`~ThisType.id~`_`~i~j~`[] `~op~` finalResult.args.arg`~InType.id~`[`~range~`];\n";`;
@@ -802,7 +853,7 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 		@nogc static immutable(string) comp(string cop, uint level, string i, string j, string[] args, string range, string destSize)(){
 			enum string code = `return "`~operation!(cop, level, i, j, args[0..this.args.length], range, destSize)~
 				`temp`~level.to!string~`[] `~op~`= finalResult.args[`~args[$-1]~`];\n";`;
-			debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
+			//debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
 			//debug pragma(msg, "args = "~args.join(","));
 			//debug pragma(msg, code~"\n");
 			mixin(code);
@@ -834,32 +885,7 @@ private struct MatrixArrayResult(size_t r, size_t c, T = double, alias operation
 
 alias VectorArray(size_t l, T = double, uint line = __LINE__, string file = __FILE__) = MatrixArray!(l, 1, T, line, file);
 
-string buildCodeBlock(alias operation, string resultId, size_t r, size_t c, string range, string destSize)() {
-	string code = "";
-	foreach(i; aliasSeqOf!(iota(0, r))) {
-		foreach(j; aliasSeqOf!(iota(0, c))) {
-			code ~= operation!(
-				resultId,
-				to!string(i),
-				to!string(j),
-				"k..k+"~range,
-				destSize
-			);
-
-			code ~= "this.q"~i.to!string~j.to!string~"[k..k+"~range~"] = temp_"~resultId~"_"~i.to!string~j.to!string~"[];";
-		}
-	}
-	
-	import std.string : strip;
-
-	return code
-		.split("\n")
-		.uniq
-		.map!(a => strip(a))
-		.join("\n");
-}
-
-struct EnumResult
+private struct EnumResult
 {
 	this(ulong _line, string _code) {
 		line = _line;
@@ -869,7 +895,7 @@ struct EnumResult
 	string code;
 }
 
-EnumResult[] enumerateCode(string[] code) {
+static EnumResult[] enumerateCode(string[] code) {
 	return zip(iota(0, code.length), code)
 		.map!(a => EnumResult(a[0], a[1]))
 		.array;
@@ -885,8 +911,8 @@ struct MatrixArray(size_t r, size_t c, T = double, uint line = __LINE__, string 
 	enum size_t rows = r;
 	enum size_t columns = c;
 	
-	pragma(msg, "array id (str): "~ThisType.mangleof);
-	pragma(msg, "array id: "~id.to!string);
+	//pragma(msg, "array id (str): "~ThisType.mangleof);
+	//pragma(msg, "array id: "~id.to!string);
 
 	immutable size_t length;
 
@@ -941,6 +967,14 @@ struct MatrixArray(size_t r, size_t c, T = double, uint line = __LINE__, string 
 					mixin("ret.q"~i.to!string~j.to!string~" = this.q"~j.to!string~i.to!string~";");
 				}
 			}
+			return ret;
+		}
+
+		@trusted auto scalarArray(size_t i, size_t j = 0)()
+		{
+			auto ret = MatrixArray!(1, 1, T, line, file~i.to!string~j.to!string)(this.length, false);
+			//return MatrixArray!(1, 1, T, line, file~i.to!string~j.to!string)(mixin("this.q"~i.to!string~j.to!string));
+			mixin("ret.q00 = this.q"~i.to!string~j.to!string~";");
 			return ret;
 		}
 
@@ -1160,7 +1194,22 @@ struct MatrixArray(size_t r, size_t c, T = double, uint line = __LINE__, string 
 					~destSize~`] temp_`~resultId~`_`~i~j~` = finalResult.args.arg`~ThisType.id~`.q`~i~j~`[`~range~`] `~op~` finalResult.args.arg`~InType.id~`.q`~i~j~`[`~range~`];\n";`;
 				mixin(code);
 			}
-			return MatrixArrayResult!(r, c, T, computationFunc, ThisType, InType, ThisType, InType)(tuple(this, cast(InType)inRhs));
+			return MatrixArrayResult!(r, c, T, comp, ThisType, InType, ThisType, InType)(tuple(this, cast(InType)inRhs));
+		}
+
+		@trusted auto opBinary(string op, uint line, string file)(inout MatrixArray!(r, c, T, line, file) inRhs)
+			if(op == "+" || op == "-")
+		{
+
+			alias InType = MatrixArray!(r, c, T, line, file);
+			assert(this.length == inRhs.length, "Matrix arrays are not the same size");
+			
+			@nogc static immutable(string) comp(string resultId, string i, string j, string range, string destSize)(){
+				enum string code = `return "T[`
+					~destSize~`] temp_`~resultId~`_`~i~j~` = finalResult.args.arg`~ThisType.id~`.q`~i~j~`[`~range~`] `~op~` finalResult.args.arg`~InType.id~`.q`~i~j~`[`~range~`];\n";`;
+				mixin(code);
+			}
+			return MatrixArrayResult!(r, c, T, comp, ThisType, InType, ThisType, InType)(tuple(this, cast(InType)inRhs));
 		}
 
 		@trusted auto opBinary(string op, alias operation, LhsType, RhsType, Args...)(MatrixArrayResult!(r, c, T, operation, LhsType, RhsType, Args) inRhs)
