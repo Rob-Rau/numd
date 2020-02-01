@@ -1,5 +1,7 @@
 module numd.utility;
 
+import std.conv;
+
 /++
 + This is the tolerance used when doing floating point comparisons.
 +/
@@ -11,9 +13,9 @@ struct Meshgrid(T = double)
 	T[][] Y;
 }
 
-Meshgrid meshgrid(T = double)(T[] x, T[] y)
+Meshgrid!T meshgrid(T = double)(T[] x, T[] y)
 {
-	Meshgrid mesh = {X: new T[][](y.length, x.length), Y: new T[][](y.length, x.length)};
+	Meshgrid!T mesh = {X: new T[][](y.length, x.length), Y: new T[][](y.length, x.length)};
 
 	for(int i = 0; i < y.length; i++)
 		for(int j = 0; j < x.length; j++)
@@ -26,10 +28,10 @@ Meshgrid meshgrid(T = double)(T[] x, T[] y)
 	return mesh;
 }
 
-T[] linspace(T = double)(double start, double end, int points)
+T[] linspace(T = double)(T start, T end, int points)
 {
 	//real h = (end-start)/(points-1);
-	T h = (end-start)/(points);
+	T h = ((end-start)/(points)).to!T;
 	T[] x = new T[points];
 	x[0] = start;
 	for(int i = 1; i < points; i++)

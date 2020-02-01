@@ -680,6 +680,16 @@ struct Matrix(size_t r, size_t c, T = double)
 			//return res;
 			return iota(0, r).fold!((res, i) => res += mData[i]*rhs.mData[i])(0);
 		}
+
+		inout T dot(Vector!(r, T) rhs)
+		{
+			T res = 0;
+			for(size_t i = 0; i < r; i++)
+				res += mData[i]*rhs.mData[i];
+			
+			return res;
+			//return iota(0, r).fold!((res, i) => res += mData[i]*rhs.mData[i])(0);
+		}
 		
 		T magnitude()
 		{
@@ -708,13 +718,13 @@ struct Matrix(size_t r, size_t c, T = double)
 		}
 	}
 
-	@property size_t rows() immutable { return r; };
-	@property size_t columns() immutable { return c; };
-	//immutable size_t rows = r;
-	//immutable size_t columns = c;
+	enum size_t rows = r;
+	enum size_t columns = c;
+
 }
 	string toString()
 	{
+		import std.format : format;
 		import std.string : rightJustify;
 		string matStr;
 		
@@ -722,9 +732,9 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			matStr ~= "[";
 			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ to!string(mData[i*c + j]).rightJustify(3, ' ');
+				matStr ~= " " ~ mData[i*c + j].format!"%s";
 			
-			matStr ~= " ]\n";
+			matStr ~= " ]";
 		}
 		return matStr;
 	}
