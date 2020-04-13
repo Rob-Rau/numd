@@ -737,7 +737,7 @@ struct Matrix(size_t r, size_t c, T = double)
 		ThisType normalize()
 		{
 			auto res = Vector!(r, T)(0);
-			immutable mag = 1.0/magnitude;
+			immutable mag = 1/magnitude;
 			res.mData[] = mData[]*mag;
 			return res;
 		}
