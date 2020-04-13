@@ -648,6 +648,13 @@ struct Matrix(size_t r, size_t c, T = double)
 		mixin("mData[] "~op~"= rhs.mData[];");
 	}
 
+	ThisType opUnary(string s)() immutable if (s == "-")
+	{
+		auto neg = ThisType(0);
+		neg.mData[] = -mData[];
+		return neg;
+	}
+
 	ThisType opUnary(string s)() if (s == "-")
 	{
 		auto neg = ThisType(0);
@@ -673,12 +680,11 @@ struct Matrix(size_t r, size_t c, T = double)
 		
 		inout T dot(ref inout Vector!(r, T) rhs)
 		{
-			//T res = 0;
-			//for(size_t i = 0; i < r; i++)
-			//	res += mData[i]*rhs.mData[i];
-			//
-			//return res;
-			return iota(0, r).fold!((res, i) => res += mData[i]*rhs.mData[i])(0);
+			T res = 0;
+			for(size_t i = 0; i < r; i++)
+				res += mData[i]*rhs.mData[i];
+			
+			return res;
 		}
 
 		inout T dot(Vector!(r, T) rhs)
@@ -688,16 +694,34 @@ struct Matrix(size_t r, size_t c, T = double)
 				res += mData[i]*rhs.mData[i];
 			
 			return res;
-			//return iota(0, r).fold!((res, i) => res += mData[i]*rhs.mData[i])(0);
 		}
-		
+
+		T magnitude() immutable
+		{
+			static assert(isNumeric!T, "T is not a numeric type.");
+
+			T res = 0;
+			foreach(ref element; mData)
+				res += element*element;
+			
+			static if(isFloatingPoint!T) {
+				res = sqrt(res);
+			} else static if(isIntegral!T) {
+				// cast to double if we are not a floating point type and round result.
+				res = cast(T)round(sqrt(cast(double)res));
+			} else {
+				res = cast(T)sqrt(cast(double)res);
+			}
+			return res;
+		}
+
 		T magnitude()
 		{
 			static assert(isNumeric!T, "T is not a numeric type.");
 
 			T res = 0;
 			foreach(ref element; mData)
-				res += element^^2;
+				res += element*element;
 			
 			static if(isFloatingPoint!T) {
 				res = sqrt(res);
@@ -713,7 +737,8 @@ struct Matrix(size_t r, size_t c, T = double)
 		ThisType normalize()
 		{
 			auto res = Vector!(r, T)(0);
-			res.mData[] = mData[]/magnitude();
+			immutable mag = 1.0/magnitude;
+			res.mData[] = mData[]*mag;
 			return res;
 		}
 	}

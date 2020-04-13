@@ -1259,7 +1259,7 @@ struct MatrixArray(size_t r, size_t c, T = double, uint line = __LINE__, string 
 							a => " + finalResult.args.arg"~ThisType.id~".q"~i~to!string(a)~"["~range~"] "~op~" finalResult.args.arg"~InType.id~".q"~to!string(a)~j~"["~range~"]"
 						).join~`;\n";`;
 
-				debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
+				//debug pragma(msg, __LINE__.to!string~": level = "~level.to!string);
 				//debug pragma(msg, code);
 				mixin(code);
 			}
