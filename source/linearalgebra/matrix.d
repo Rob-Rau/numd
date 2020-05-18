@@ -741,6 +741,14 @@ struct Matrix(size_t r, size_t c, T = double)
 			res.mData[] = mData[]*mag;
 			return res;
 		}
+
+		ThisType normalize() immutable
+		{
+			auto res = Vector!(r, T)(0);
+			immutable mag = 1/magnitude;
+			res.mData[] = mData[]*mag;
+			return res;
+		}
 	}
 
 	enum size_t rows = r;
