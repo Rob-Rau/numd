@@ -281,125 +281,385 @@ struct Matrix(size_t r, size_t c, T = double)
 
 	this(T init)
 	{
-		mData[] = init;
+		static if(isArray!T) {
+			foreach(idx; 0..r*c) {
+				mData[idx][] = init[];
+			}
+		} else {
+			mData[] = init;
+		}
 	}
 
-	inout T opIndex(size_t index)
+	static if(isArray!T) {
+		this(ForeachType!T init)
+		{
+			foreach(idx; 0..r*c) {
+				mData[idx][] = init;
+				/+import std.stdio : writeln;
+				import std.format : format;
+				debug writeln("mData[", idx, "]: ", mData[idx][].map!(a => format("%e", a)));+/
+			}
+		}
+	}
+
+	@trusted ref T opIndex(size_t index)
 	{
+		assert(index < r*c);
 		return mData[index];
 	}
 
-	void opIndexAssign(T element, size_t index)
+	@trusted T opIndex(size_t index) immutable
 	{
-		mData[index] = element;
+		assert(index < r*c);
+		return mData[index];
 	}
 
-	void opIndexOpAssign(string op)(T element, size_t index)
+	@trusted T opIndex(size_t index) const
 	{
-		mixin("mData[index] "~op~"= element;");
+		assert(index < r*c);
+		return mData[index];
 	}
 
-	inout T opIndex(size_t row, size_t col)
+	@trusted void opIndexAssign(T element, size_t index)
 	{
+		static if(isArray!T) {
+			mData[index][] = element[];
+		} else {
+			mData[index] = element;
+		}
+	}
+
+	@trusted void opIndexOpAssign(string op)(T element, size_t index)
+	{
+		assert(index < r*c);
+		static if(isArray!T) {
+			mixin("mData[index][] "~op~"= element[];");
+		} else {
+			mixin("mData[index] "~op~"= element;");
+		}
+
+		
+	}
+
+	@trusted ref T opIndex(size_t row, size_t col)
+	{
+		assert(row < r);
+		assert(col < c);
+
 		size_t idx = row*c + col;
 		return mData[idx];
 	}
 	
-	void opIndexAssign(T element, size_t row, size_t col)
+	@trusted T opIndex(size_t row, size_t col) immutable
 	{
+		assert(row < r);
+		assert(col < c);
+
 		size_t idx = row*c + col;
-		mData[idx] = element;
+		return mData[idx];
 	}
 
-	void opIndexOpAssign(string op)(T element, size_t row, size_t col)
+	@trusted T opIndex(size_t row, size_t col) const
 	{
+		assert(row < r);
+		assert(col < c);
+
 		size_t idx = row*c + col;
-		mixin("mData[idx] "~op~"= element;");
+		return mData[idx];
+	}
+	
+
+	@trusted void opIndexAssign(T element, size_t row, size_t col)
+	{
+		assert(row < r);
+		assert(col < c);
+
+		size_t idx = row*c + col;
+		static if(isArray!T) {
+			mData[idx][] = element[];
+		} else {
+			mData[idx] = element;
+		}
+		
 	}
 
-	T[] opIndex()
+	@trusted void opIndexOpAssign(string op)(T element, size_t row, size_t col)
+	{
+		assert(row < r);
+		assert(col < c);
+
+		size_t idx = row*c + col;
+		static if(isArray!T) {
+			mixin("mData[idx][] "~op~"= element[];");
+		} else {
+			mixin("mData[idx] "~op~"= element;");
+		}
+		
+	}
+
+	@trusted T[] opIndex()
 	{
 		return mData[];
 	}
 
-	size_t opDollar(size_t pos)()
+	@trusted size_t opDollar(size_t pos)()
 	{
 		return mData.length;
 	}
 
-	T[] opSlice(size_t a, size_t b)
+	@trusted T[] opSlice(size_t a, size_t b)
 	{
+		assert(a < r*c);
+		assert(b <= r*c);
+
 		return mData[a..b];
 	}
 
-	inout Matrix!(r, ic, rhsType) opBinary(string op, size_t ir, size_t ic, rhsType)(ref inout Matrix!(ir, ic, rhsType) rhs)
-	{
-		static if(op == "+" || op == "-")
+	static if(isArray!T) {
+		@trusted Matrix!(r, ic, T) opBinary(string op, size_t ir, size_t ic, rhsType)(ref Matrix!(ir, ic, rhsType) rhs)
 		{
-			static assert(ic == c, "Incompatible matricies");
-			static assert(ir == r, "Incompatible matricies");
-			auto res = ThisType(0);
-			mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
-			return res;
+			pragma(inline, true);
+			static if(op == "+" || op == "-")
+			{
+				static assert(ic == c, "Incompatible matricies");
+				static assert(ir == r, "Incompatible matricies");
+				auto res = ThisType(0);
+				static if(isArray!T && isArray!rhsType) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx][];");
+					}
+				} else static if(isArray!T && !isArray!rhsType) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx];");
+					}
+				} else {
+					mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
+				}
+				return res;
+			}
+			else static if(op == "*")
+			{
+
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static assert(c == ir, "Incompatible matricies for multiplication");
+				
+				foreach(i; 0..r) {
+					foreach(j; 0..ic) {
+						foreach(k; 0..ir) {
+							static if(isArray!T && isArray!rhsType) {
+								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j][];
+								T tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else static if(isArray!T && !isArray!rhsType) {
+								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j];
+								T tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else {
+								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+							}
+						}
+					}
+				}
+
+				return res;
+			}
+			else static assert(0, "Operator not implimented");
 		}
-		else static if(op == "*")
+
+		@trusted Matrix!(r, ic, T) opBinary(string op, size_t ir, size_t ic, rhsType)(Matrix!(ir, ic, rhsType) rhs)
 		{
-			static assert(c == ir, "Incompatible matricies for multiplication");
-			auto res = Matrix!(r, ic, rhsType)(0);
-			for(int i = 0; i < r; i++)
-				for(int j = 0; j < ic; j++)
-					for(int k = 0; k < ir; k++)
-						res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
-			return res;
+			pragma(inline, true);
+			static if(op == "+" || op == "-")
+			{
+				static assert(ic == c, "Incompatible matricies");
+				static assert(ir == r, "Incompatible matricies");
+				auto res = ThisType(0);
+				static if(isArray!T && isArray!rhsType) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx][];");
+					}
+				} else static if(isArray!T && !isArray!rhsType) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx];");
+					}
+				} else {
+					mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
+				}
+				return res;
+			}
+			else static if(op == "*")
+			{
+
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static assert(c == ir, "Incompatible matricies for multiplication");
+				
+				foreach(i; 0..r) {
+					foreach(j; 0..ic) {
+						foreach(k; 0..ir) {
+							static if(isArray!T && isArray!rhsType) {
+								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j][];
+								T tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else static if(isArray!T && !isArray!rhsType) {
+								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j];
+								T tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else {
+								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+							}
+						}
+					}
+				}
+
+				return res;
+			}
+			else static assert(0, "Operator not implimented");
 		}
-		else static assert(0, "Operator not implimented");
+	}
+	static if(!isArray!T) {
+		@trusted Matrix!(r, ic, rhsType) opBinary(string op, size_t ir, size_t ic, rhsType)(ref Matrix!(ir, ic, rhsType) rhs)
+		{
+			pragma(inline, true);
+			static if(op == "+" || op == "-")
+			{
+				static assert(ic == c, "Incompatible matricies");
+				static assert(ir == r, "Incompatible matricies");
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static if(isArray!rhsType) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
+					}
+				} else {
+					mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
+				}
+				return res;
+			}
+			else static if(op == "*")
+			{
+
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static assert(c == ir, "Incompatible matricies for multiplication");
+				
+				foreach(i; 0..r) {
+					foreach(j; 0..ic) {
+						foreach(k; 0..ir) {
+							static if(isArray!rhsType) {
+								rhsType tmp = mData[c*i + k]*rhs.mData[k*ic + j][];
+								rhsType tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else {
+								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+							}
+						}
+					}
+				}
+
+				return res;
+			}
+			else static assert(0, "Operator not implimented");
+		}
+
+		@trusted Matrix!(r, ic, T) opBinary(string op, size_t ir, size_t ic, rhsType)(Matrix!(ir, ic, rhsType) rhs)
+		{
+			pragma(inline, true);
+			static if(op == "+" || op == "-")
+			{
+				static assert(ic == c, "Incompatible matricies");
+				static assert(ir == r, "Incompatible matricies");
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static if(isArray!rhsType) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
+					}
+				} else {
+					mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
+				}
+				return res;
+			}
+			else static if(op == "*")
+			{
+
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static assert(c == ir, "Incompatible matricies for multiplication");
+				
+				foreach(i; 0..r) {
+					foreach(j; 0..ic) {
+						foreach(k; 0..ir) {
+							static if(isArray!rhsType) {
+								rhsType tmp = mData[c*i + k]*rhs.mData[k*ic + j][];
+								rhsType tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else {
+								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+							}
+						}
+					}
+				}
+
+				return res;
+			}
+			else static assert(0, "Operator not implimented");
+		}
 	}
 
-	inout Matrix!(r, ic, rhsType) opBinary(string op, size_t ir, size_t ic, rhsType)(inout Matrix!(ir, ic, rhsType) rhs)
-	{
-		static if(op == "+" || op == "-")
-		{
-			static assert(ic == c, "Incompatible matricies");
-			static assert(ir == r, "Incompatible matricies");
-			auto res = ThisType(0);
-			mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
-			return res;
-		}
-		else static if(op == "*")
-		{
-			static assert(c == ir, "Incompatible matricies for multiplication");
-			auto res = Matrix!(r, ic, rhsType)(0);
-			for(int i = 0; i < r; i++)
-				for(int j = 0; j < ic; j++)
-					for(int k = 0; k < ir; k++)
-						res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
-			return res;
-		}
-		else static assert(0, "Operator not implimented");
-	}
-
-	inout ThisType opBinary(string op)(double rhs)
+	@trusted inout ThisType opBinary(string op)(T rhs)
 	{
 		static if(op == "*" || op == "/")
 		{
 			auto res = ThisType(0);
-			mixin("res.mData[] = mData[]"~op~"rhs;");
+			static if(isArray!T) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = mData[idx][]"~op~"rhs[];");
+				}
+			} else {
+				mixin("res.mData[] = mData[]"~op~"rhs;");
+			}
+			
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
 	}
 
-	inout Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(ref inout Matrix!(ir, ic, lhsType) lhs)
+	static if(isArray!T) {
+		@trusted inout ThisType opBinary(string op)(ForeachType!T rhs)
+		{
+			static if(op == "*" || op == "/")
+			{
+				auto res = ThisType(0);
+				static if(isArray!T) {
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs;");
+					}
+				} else {
+					mixin("res.mData[] = mData[]"~op~"rhs;");
+				}
+				
+				return res;
+			}
+			else static assert(0, "Operator not implemented");
+		}
+	}
+
+	@trusted inout Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(ref inout Matrix!(ir, ic, lhsType) lhs)
 	{
-		static assert(is (T : lhsType));
+		//static assert(is (T : lhsType));
 		static if(op == "*")
 		{
 			static assert(ic == r, "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
 			auto res = Matrix!(ir, c, T)(0);
-			for(int i = 0; i < ir; i++)
-				for(int j = 0; j < c; j++)
-					for(int k = 0; k < ic; k++)
-						res.mData[i*c + j] += lhs.mData[ic*i + k]*mData[k*c + j];
+			for(int i = 0; i < ir; i++) {
+				for(int j = 0; j < c; j++) {
+					for(int k = 0; k < ic; k++) {
+						static if(isArray!T && isArray!lhsType) {
+							res.mData[i*c + j][] += lhs.mData[ic*i + k][]*mData[k*c + j][];
+						} else static if(isArray!T && !isArray!lhsType) {
+							res.mData[i*c + j][] += lhs.mData[ic*i + k]*mData[k*c + j][];
+						} else {
+							res.mData[i*c + j] += lhs.mData[ic*i + k]*mData[k*c + j];
+						}
+					}
+				}
+			}
 
 			return res;
 		}
@@ -407,147 +667,94 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			static assert((ic == c) && (ir == r), "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
 			auto res = Matrix!(ir, c, T)(0);
-			mixin("res.mData[] = lhs.mData[] "~op~" mData[];");
+			static if(isArray!T && isArray!lhsType) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx][];");
+				}
+			} static if(isArray!T && !isArray!lhsType) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs.mData[idx] "~op~" mData[idx][];");
+				}
+			} else {
+				mixin("res.mData[] = lhs.mData[] "~op~" mData[];");
+			}
+			
+
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
 	}
 
-	inout ThisType opBinaryRight(string op)(double lhs)
+	@trusted inout ThisType opBinaryRight(string op)(T lhs)
 	{
 		static if(op == "*" || op == "/")
 		{
 			auto res = ThisType(0);
-			mixin("res.mData[] = lhs"~op~"mData[];");
+			static if(isArray!T) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs[]"~op~"mData[idx][];");
+				}
+			} else {
+				mixin("res.mData[] = lhs"~op~"mData[];");
+			}
+			
 			return res;
 		}
 		else static assert(0, "Operator not implemented");
 	}
 
-	bool opEquals(ref ThisType o)
+	@trusted bool opEquals(ref ThisType o)
 	{
 		for(int i = 0; i < r*c; i++)
 		{
-			if(abs(mData[i] - o.mData[i]) > fpTol)
-				return false;
+			static if(isArray!T) {
+				foreach(sub_idx; 0..mData[i].length) {
+					if(abs(mData[i][sub_idx] - o.mData[i][sub_idx]) > fpTol)
+						return false;
+				}
+			} else {
+				if(abs(mData[i] - o.mData[i]) > fpTol)
+					return false;
+			}
 		}
 		return true;
 	}
 
-	ThisType rref()
+	@trusted bool opEquals(immutable ThisType o) immutable
 	{
-		auto rref = ThisType(mData);
-
-		int currRow = 0, currCol = 0;
-		while((currRow < r) && (currCol < c))
+		for(int i = 0; i < r*c; i++)
 		{
-			if(rref.mData[currRow*c + currCol] != 0)
-			{
-				T[] row;
-				row = rref.mData[currRow*c..currRow*c+c];
-
-				// Normalize row so first entry is 1
-				if(rref.mData[currRow*c + currCol] != 1)
-				{
-					auto first = rref.mData[currRow*c + currCol];
-					row[] /= first;
+			static if(isArray!T) {
+				foreach(sub_idx; 0..mData[i].length) {
+					if(abs(mData[i][sub_idx] - o.mData[i][sub_idx]) > fpTol)
+						return false;
 				}
-				// Find all non-zero rows in this column and scale the current 
-				// row by the value in other row, then subtract current row from
-				// from other
-				for(int j = 0; j < r; j++)
-				{
-					if(j != currRow)
-					{
-						T[] nextRow;
-						nextRow = rref.mData[j*c..j*c+c];
-						if(rref.mData[j*c + currCol] != 0)
-						{
-							auto first = rref.mData[j*c + currCol];
-							nextRow[] -= (first*row[])[];
-						}
-					}
-				}
-				currRow++;
-				currCol++;
-			}
-			else if((currRow == r-1) && (currCol == c - 1))
-			{
-				currCol++;
-			}
-			// See if there is a row that has a non-zero entry further down
-			// if so swap it with current row
-			else
-			{
-				for(int j = (currRow+1); j < r; j++)
-				{
-					// Swap this row with current row
-					if(rref.mData[j*c + currCol] != 0)
-					{
-						T[c] swapRow;
-						swapRow[] = rref.mData[j*c..j*c+c];
-						rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
-						rref.mData[currRow*c..currRow*c+c] = swapRow[];
-						break;
-					}
-					// All entries in this column are 0, move on
-					else if(j == r-1)
-					{
-						currCol++;
-					}
-				}
+			} else {
+				if(abs(mData[i] - o.mData[i]) > fpTol)
+					return false;
 			}
 		}
-		return rref;
+		return true;
 	}
 
-	inout Matrix!(c, r, T) transpose()
-	{
-		auto ret = Matrix!(c, r, T)(0);
-		// Loop over new rows
-		for(int i = 0; i < c; i++)
+	static if(!isArray!T) {
+		@trusted ThisType rref()
 		{
-			// Loop over new cols
-			for(int j = 0; j < r; j++)
-			{
-				ret.mData[i*r+j] = mData[j*c + i];
-			}
-		}
-		return ret;
-	}
-
-	// Things that only apply to squar matricies.
-	static if(c == r)
-	{
-		static ThisType identity()
-		{
-			auto ident = ThisType(0);
-			for(int i = 0; i < r*c; i += r+1)
-			{
-				ident.mData[i] = 1;
-			}
-			return ident;
-		}
-
-		Nullable!ThisType inverse()
-		{
-			auto inv = identity();
 			auto rref = ThisType(mData);
 
 			int currRow = 0, currCol = 0;
 			while((currRow < r) && (currCol < c))
 			{
-				if(abs(rref.mData[currRow*c + currCol]) > fpTol)
+				if(rref.mData[currRow*c + currCol] != 0)
 				{
-					T[] row, invRow;
+					T[] row;
 					row = rref.mData[currRow*c..currRow*c+c];
-					invRow = inv.mData[currRow*c..currRow*c+c];
+
 					// Normalize row so first entry is 1
-					if(abs(rref.mData[currRow*c + currCol] - 1) > fpTol)
+					if(rref.mData[currRow*c + currCol] != 1)
 					{
 						auto first = rref.mData[currRow*c + currCol];
 						row[] /= first;
-						invRow[] /= first;
 					}
 					// Find all non-zero rows in this column and scale the current 
 					// row by the value in other row, then subtract current row from
@@ -556,15 +763,12 @@ struct Matrix(size_t r, size_t c, T = double)
 					{
 						if(j != currRow)
 						{
-							T[] nextRow, invNexRow;
+							T[] nextRow;
 							nextRow = rref.mData[j*c..j*c+c];
-							invNexRow = inv.mData[j*c..j*c+c];
-
-							if(abs(rref.mData[j*c + currCol]) > fpTol)
+							if(rref.mData[j*c + currCol] != 0)
 							{
 								auto first = rref.mData[j*c + currCol];
 								nextRow[] -= (first*row[])[];
-								invNexRow[] -= (first*invRow[])[];
 							}
 						}
 					}
@@ -582,17 +786,12 @@ struct Matrix(size_t r, size_t c, T = double)
 					for(int j = (currRow+1); j < r; j++)
 					{
 						// Swap this row with current row
-						if(abs(rref.mData[j*c + currCol]) > fpTol)
+						if(rref.mData[j*c + currCol] != 0)
 						{
-							T[c] swapRow, invSwapRow;
+							T[c] swapRow;
 							swapRow[] = rref.mData[j*c..j*c+c];
-							invSwapRow[] = inv.mData[j*c..j*c+c];
-
 							rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
-							inv.mData[j*c..j*c+c] = inv.mData[currRow*c..currRow*c+c];
-
 							rref.mData[currRow*c..currRow*c+c] = swapRow[];
-							inv.mData[currRow*c..currRow*c+c] = invSwapRow[];
 							break;
 						}
 						// All entries in this column are 0, move on
@@ -603,17 +802,130 @@ struct Matrix(size_t r, size_t c, T = double)
 					}
 				}
 			}
+			return rref;
+		}
+	}
 
-			import std.algorithm : fold;
-			auto allZeros = rref.mData[$-c..$].fold!((a, b) => (fabs(b) <= 1.0e-12) && a)(true);
-
-			if(allZeros)
+	@trusted inout Matrix!(c, r, T) transpose()
+	{
+		auto ret = Matrix!(c, r, T)(0);
+		// Loop over new rows
+		for(int i = 0; i < c; i++)
+		{
+			// Loop over new cols
+			for(int j = 0; j < r; j++)
 			{
-				return Nullable!ThisType();
+				static if(isArray!T) {
+					ret.mData[i*r+j][] = mData[j*c + i][];
+				} else {
+					ret.mData[i*r+j] = mData[j*c + i];
+				}
+				
 			}
-			else
+		}
+		return ret;
+	}
+
+	// Things that only apply to squar matricies.
+	static if(c == r)
+	{
+		@trusted static ThisType identity()
+		{
+			auto ident = ThisType(0);
+			for(int i = 0; i < r*c; i += r+1)
 			{
-				return inv.nullable!ThisType;
+				ident.mData[i] = 1;
+			}
+			return ident;
+		}
+
+		static if(!isArray!T) {
+			@trusted Nullable!ThisType inverse()
+			{
+				auto inv = identity();
+				auto rref = ThisType(mData);
+
+				int currRow = 0, currCol = 0;
+				while((currRow < r) && (currCol < c))
+				{
+					if(abs(rref.mData[currRow*c + currCol]) > fpTol)
+					{
+						T[] row, invRow;
+						row = rref.mData[currRow*c..currRow*c+c];
+						invRow = inv.mData[currRow*c..currRow*c+c];
+						// Normalize row so first entry is 1
+						if(abs(rref.mData[currRow*c + currCol] - 1) > fpTol)
+						{
+							auto first = rref.mData[currRow*c + currCol];
+							row[] /= first;
+							invRow[] /= first;
+						}
+						// Find all non-zero rows in this column and scale the current 
+						// row by the value in other row, then subtract current row from
+						// from other
+						for(int j = 0; j < r; j++)
+						{
+							if(j != currRow)
+							{
+								T[] nextRow, invNexRow;
+								nextRow = rref.mData[j*c..j*c+c];
+								invNexRow = inv.mData[j*c..j*c+c];
+
+								if(abs(rref.mData[j*c + currCol]) > fpTol)
+								{
+									auto first = rref.mData[j*c + currCol];
+									nextRow[] -= (first*row[])[];
+									invNexRow[] -= (first*invRow[])[];
+								}
+							}
+						}
+						currRow++;
+						currCol++;
+					}
+					else if((currRow == r-1) && (currCol == c - 1))
+					{
+						currCol++;
+					}
+					// See if there is a row that has a non-zero entry further down
+					// if so swap it with current row
+					else
+					{
+						for(int j = (currRow+1); j < r; j++)
+						{
+							// Swap this row with current row
+							if(abs(rref.mData[j*c + currCol]) > fpTol)
+							{
+								T[c] swapRow, invSwapRow;
+								swapRow[] = rref.mData[j*c..j*c+c];
+								invSwapRow[] = inv.mData[j*c..j*c+c];
+
+								rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
+								inv.mData[j*c..j*c+c] = inv.mData[currRow*c..currRow*c+c];
+
+								rref.mData[currRow*c..currRow*c+c] = swapRow[];
+								inv.mData[currRow*c..currRow*c+c] = invSwapRow[];
+								break;
+							}
+							// All entries in this column are 0, move on
+							else if(j == r-1)
+							{
+								currCol++;
+							}
+						}
+					}
+				}
+
+				import std.algorithm : fold;
+				auto allZeros = rref.mData[$-c..$].fold!((a, b) => (fabs(b) <= fpTol) && a)(true);
+
+				if(allZeros)
+				{
+					return Nullable!ThisType();
+				}
+				else
+				{
+					return inv.nullable!ThisType;
+				}
 			}
 		}
 	}
@@ -651,7 +963,14 @@ struct Matrix(size_t r, size_t c, T = double)
 	ThisType opUnary(string s)() immutable if (s == "-")
 	{
 		auto neg = ThisType(0);
-		neg.mData[] = -mData[];
+		static if(isArray!T) {
+			foreach(idx, ref arr; mData[]) {
+				neg.mData[idx][] = -arr[];
+			}
+		} else {
+			neg.mData[] = -mData[];
+		}
+		
 		return neg;
 	}
 
@@ -666,14 +985,19 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		static if(r == 3)
 		{
-			Vector!(3) cross(Vector!(3) rhs)
+			Vector!(3, T) cross(Vector!(3, T) rhs)
 			{
-				auto res = Vector!(3)(0);
+				auto res = Vector!(3, T)(0);
 				
-				res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
-				res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
-				res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
-				
+				static if(isArray!T) {
+					res.mData[0][] = mData[1][]*rhs.mData[2][] - mData[2][]*rhs.mData[1][];
+					res.mData[1][] = mData[2][]*rhs.mData[0][] - mData[0][]*rhs.mData[2][];
+					res.mData[2][] = mData[0][]*rhs.mData[1][] - mData[1][]*rhs.mData[0][];
+				} else {
+					res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
+					res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
+					res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+				}
 				return res;
 			}
 		}
@@ -681,8 +1005,13 @@ struct Matrix(size_t r, size_t c, T = double)
 		inout T dot(ref inout Vector!(r, T) rhs)
 		{
 			T res = 0;
-			for(size_t i = 0; i < r; i++)
-				res += mData[i]*rhs.mData[i];
+			for(size_t i = 0; i < r; i++) {
+				static if(isArray!T) {
+					res[] += mData[i][]*rhs.mData[i][];
+				} else {
+					res += mData[i]*rhs.mData[i];
+				}
+			}
 			
 			return res;
 		}
@@ -690,34 +1019,76 @@ struct Matrix(size_t r, size_t c, T = double)
 		inout T dot(Vector!(r, T) rhs)
 		{
 			T res = 0;
-			for(size_t i = 0; i < r; i++)
-				res += mData[i]*rhs.mData[i];
-			
+			for(size_t i = 0; i < r; i++) {
+				static if(isArray!T) {
+					res[] += mData[i][]*rhs.mData[i][];
+				} else {
+					res += mData[i]*rhs.mData[i];
+				}
+			}
+
 			return res;
+		}
+
+		static if(isArray!T) {
+			inout T dot(ref inout Vector!(r, ForeachType!T) rhs)
+			{
+				T res = 0;
+				for(size_t i = 0; i < r; i++) {
+					res[] += mData[i][]*rhs.mData[i];
+				}
+				return res;
+			}
 		}
 
 		T magnitude() immutable
 		{
-			static assert(isNumeric!T, "T is not a numeric type.");
-
-			T res = 0;
-			foreach(ref element; mData)
-				res += element*element;
+			static if(isArray!T) {
+				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+				
+				T res = 0;
+				foreach(ref element; mData)
+					res[] += element[]*element[];
 			
-			static if(isFloatingPoint!T) {
-				res = sqrt(res);
-			} else static if(isIntegral!T) {
-				// cast to double if we are not a floating point type and round result.
-				res = cast(T)round(sqrt(cast(double)res));
+				static if(isFloatingPoint!(ForeachType!T)) {
+					foreach(ref mag_i ; res) {
+						mag_i = sqrt(mag_i);
+					}
+				} else static if(isIntegral!(ForeachType!T)) {
+					// cast to double if we are not a floating point type and round result.
+					foreach(ref mag_i ; res) {
+						mag_i = cast(ForeachType!T)round(sqrt(cast(double)mag_i));
+					}
+				} else {
+					foreach(ref mag_i ; res) {
+						mag_i = cast(ForeachType!T)sqrt(cast(double)mag_i);
+					}
+				}
+				return res;
+
 			} else {
-				res = cast(T)sqrt(cast(double)res);
+				static assert(isNumeric!T, "T is not a numeric type.");
+
+				T res = 0;
+				foreach(ref element; mData)
+					res += element*element;
+				
+				static if(isFloatingPoint!T) {
+					res = sqrt(res);
+				} else static if(isIntegral!T) {
+					// cast to double if we are not a floating point type and round result.
+					res = cast(T)round(sqrt(cast(double)res));
+				} else {
+					res = cast(T)sqrt(cast(double)res);
+				}
+				return res;
+
 			}
-			return res;
 		}
 
 		T magnitude()
 		{
-			static assert(isNumeric!T, "T is not a numeric type.");
+			/+static assert(isNumeric!T, "T is not a numeric type.");
 
 			T res = 0;
 			foreach(ref element; mData)
@@ -731,22 +1102,117 @@ struct Matrix(size_t r, size_t c, T = double)
 			} else {
 				res = cast(T)sqrt(cast(double)res);
 			}
-			return res;
+			return res;+/
+			static if(isArray!T) {
+				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+				
+				T res = 0;
+				foreach(ref element; mData)
+					res[] += element[]*element[];
+			
+				static if(isFloatingPoint!(ForeachType!T)) {
+					foreach(ref mag_i ; res) {
+						mag_i = sqrt(mag_i);
+					}
+				} else static if(isIntegral!(ForeachType!T)) {
+					// cast to double if we are not a floating point type and round result.
+					foreach(ref mag_i ; res) {
+						mag_i = cast(ForeachType!T)round(sqrt(cast(double)mag_i));
+					}
+				} else {
+					foreach(ref mag_i ; res) {
+						mag_i = cast(ForeachType!T)sqrt(cast(double)mag_i);
+					}
+				}
+				return res;
+
+			} else {
+				static assert(isNumeric!T, "T is not a numeric type.");
+
+				T res = 0;
+				foreach(ref element; mData)
+					res += element*element;
+				
+				static if(isFloatingPoint!T) {
+					res = sqrt(res);
+				} else static if(isIntegral!T) {
+					// cast to double if we are not a floating point type and round result.
+					res = cast(T)round(sqrt(cast(double)res));
+				} else {
+					res = cast(T)sqrt(cast(double)res);
+				}
+				return res;
+
+			}
+
 		}
 		
+		T magnitude_squared() immutable
+		{
+			T res = 0;
+			static if(isArray!T) {
+				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+
+				foreach(ref element; mData)
+					res[] += element[]*element[];
+			} else {
+				static assert(isNumeric!T, "T is not a numeric type.");
+
+				foreach(ref element; mData)
+					res += element*element;
+			}
+			return res;
+		}
+
+		T magnitude_squared()
+		{
+			T res = 0;
+			static if(isArray!T) {
+				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+
+				foreach(ref element; mData)
+					res[] += element[]*element[];
+			} else {
+				static assert(isNumeric!T, "T is not a numeric type.");
+
+				foreach(ref element; mData)
+					res += element*element;
+			}
+			return res;
+
+		}
+
 		ThisType normalize()
 		{
 			auto res = Vector!(r, T)(0);
-			immutable mag = 1/magnitude;
-			res.mData[] = mData[]*mag;
+			static if(isArray!T) {
+				immutable T mag = 1/magnitude[];
+				foreach(idx; 0..mag.length) {
+					res.mData[idx][] = mData[idx][]*mag[];
+				}
+			} else {
+				immutable mag = 1/magnitude;
+				res.mData[] = mData[]*mag;
+			}
 			return res;
 		}
 
 		ThisType normalize() immutable
 		{
-			auto res = Vector!(r, T)(0);
+			/+auto res = Vector!(r, T)(0);
 			immutable mag = 1/magnitude;
 			res.mData[] = mData[]*mag;
+			return res;+/
+			auto res = Vector!(r, T)(0);
+			static if(isArray!T) {
+				immutable T mag = 1/magnitude[];
+				foreach(idx; 0..mag.length) {
+					res.mData[idx][] = mData[idx][]*mag[];
+				}
+			} else {
+				immutable mag = 1/magnitude;
+				res.mData[] = mData[]*mag;
+			}
 			return res;
 		}
 	}

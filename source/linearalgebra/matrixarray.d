@@ -11,7 +11,7 @@ import std.range;
 import std.stdio;
 import std.traits;
 import std.typecons;
-
+/+
 unittest
 {
 	//immutable size_t arraySize = 10_000_000;
@@ -178,7 +178,7 @@ unittest
 			}
 		}
 	}
-}
+}+/
 /+
 unittest
 {
