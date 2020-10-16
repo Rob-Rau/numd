@@ -517,6 +517,50 @@ struct Matrix(size_t r, size_t c, T = double)
 		}
 	}
 	static if(!isArray!T) {
+		@trusted auto opBinary(string op, size_t ir, size_t ic, rhsType)(immutable Matrix!(ir, ic, rhsType) rhs) immutable
+		{
+			pragma(inline, true);
+			static if(op == "+" || op == "-")
+			{
+				static assert(ic == c, "Incompatible matricies");
+				static assert(ir == r, "Incompatible matricies");
+				
+				//auto res = Matrix!(r, ic, rhsType)(0);
+				static if(isArray!rhsType) {
+					static assert(false);
+					foreach(idx; 0..r*c) {
+						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
+					}
+				} else {
+					mixin("rhsType[r*ic] ret_data = (cast(immutable(rhsType)[])mData)[]"~op~"rhs.mData[];");
+				}
+				return Matrix!(r, ic, rhsType)(ret_data);
+			}
+			else static if(op == "*")
+			{
+
+				auto res = Matrix!(r, ic, rhsType)(0);
+				static assert(c == ir, "Incompatible matricies for multiplication");
+				
+				foreach(i; 0..r) {
+					foreach(j; 0..ic) {
+						foreach(k; 0..ir) {
+							static if(isArray!rhsType) {
+								rhsType tmp = mData[c*i + k]*rhs.mData[k*ic + j][];
+								rhsType tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*ic + j][] = tmp1[];
+							} else {
+								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+							}
+						}
+					}
+				}
+
+				return res;
+			}
+			else static assert(0, "Operator not implimented");
+		}
+
 		@trusted Matrix!(r, ic, rhsType) opBinary(string op, size_t ir, size_t ic, rhsType)(ref Matrix!(ir, ic, rhsType) rhs)
 		{
 			pragma(inline, true);
@@ -641,6 +685,51 @@ struct Matrix(size_t r, size_t c, T = double)
 	}
 
 	@trusted inout Matrix!(ir, c, T) opBinaryRight(string op, size_t ir, size_t ic, lhsType)(ref inout Matrix!(ir, ic, lhsType) lhs)
+	{
+		//static assert(is (T : lhsType));
+		static if(op == "*")
+		{
+			static assert(ic == r, "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
+			auto res = Matrix!(ir, c, T)(0);
+			for(int i = 0; i < ir; i++) {
+				for(int j = 0; j < c; j++) {
+					for(int k = 0; k < ic; k++) {
+						static if(isArray!T && isArray!lhsType) {
+							res.mData[i*c + j][] += lhs.mData[ic*i + k][]*mData[k*c + j][];
+						} else static if(isArray!T && !isArray!lhsType) {
+							res.mData[i*c + j][] += lhs.mData[ic*i + k]*mData[k*c + j][];
+						} else {
+							res.mData[i*c + j] += lhs.mData[ic*i + k]*mData[k*c + j];
+						}
+					}
+				}
+			}
+
+			return res;
+		}
+		else static if((op == "+") || (op == "-"))
+		{
+			static assert((ic == c) && (ir == r), "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
+			auto res = Matrix!(ir, c, T)(0);
+			static if(isArray!T && isArray!lhsType) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx][];");
+				}
+			} static if(isArray!T && !isArray!lhsType) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs.mData[idx] "~op~" mData[idx][];");
+				}
+			} else {
+				mixin("res.mData[] = lhs.mData[] "~op~" mData[];");
+			}
+			
+
+			return res;
+		}
+		else static assert(0, "Operator not implemented");
+	}
+
+	@trusted auto opBinaryRight(string op, size_t ir, size_t ic, lhsType)(immutable Matrix!(ir, ic, lhsType) lhs) immutable
 	{
 		//static assert(is (T : lhsType));
 		static if(op == "*")
@@ -1024,6 +1113,20 @@ struct Matrix(size_t r, size_t c, T = double)
 					res[] += mData[i][]*rhs.mData[i][];
 				} else {
 					res += mData[i]*rhs.mData[i];
+				}
+			}
+
+			return res;
+		}
+
+		inout T dot(alias vector)()
+		{
+			T res = 0;
+			for(size_t i = 0; i < r; i++) {
+				static if(isArray!T) {
+					res[] += mData[i][]*vector.mData[i][];
+				} else {
+					res += mData[i]*vector.mData[i];
 				}
 			}
 
