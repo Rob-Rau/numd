@@ -792,6 +792,26 @@ struct Matrix(size_t r, size_t c, T = double)
 		else static assert(0, "Operator not implemented");
 	}
 
+	@trusted auto opBinaryRight(string op, _T)(_T lhs) immutable
+	{
+		static if(op == "*" || op == "/")
+		{
+			alias RT = typeof(mixin("mData[0]"~op~"lhs"));
+			alias RetType = Matrix!(r, c, RT);
+			auto res = RetType(0);
+			static if(isArray!T) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs[]"~op~"mData[idx][];");
+				}
+			} else {
+				mixin("res.mData[] = lhs"~op~"mData[];");
+			}
+			
+			return res;
+		}
+		else static assert(0, "Operator not implemented");
+	}
+
 	@trusted bool opEquals(ref ThisType o)
 	{
 		for(int i = 0; i < r*c; i++)
