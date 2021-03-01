@@ -254,6 +254,19 @@ alias RVector(size_t l, T = double) = RefCounted!(Vector!(l, T));
 	assert(vec3 == expected, "RVector cross product failed");
 }
 +/
+
+@safe @nogc unittest {
+	immutable pos1 = Vector!(3, size_t)(0, 1, 2);
+	immutable pos2 = Vector!(3, size_t)(2, 1, 0);
+	immutable pos3 = Vector!(3, size_t)(0, 1, 2);
+
+	assert(pos1.toHash != pos2.toHash);
+	assert(pos1.toHash == pos3.toHash);
+
+	assert(pos1 != pos2);
+	assert(pos1 == pos3);
+}
+
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
 struct Matrix(size_t r, size_t c, T = double)
@@ -295,11 +308,20 @@ struct Matrix(size_t r, size_t c, T = double)
 		{
 			foreach(idx; 0..r*c) {
 				mData[idx][] = init;
-				/+import std.stdio : writeln;
-				import std.format : format;
-				debug writeln("mData[", idx, "]: ", mData[idx][].map!(a => format("%e", a)));+/
 			}
 		}
+	}
+
+	@trusted bool opEquals(ref const Matrix!(r, c, T) rhs) const {
+		bool equal = true;
+		foreach(idx; 0..r*c) {
+			equal = equal && (mData[idx] == rhs.mData[idx]);
+		}
+		return equal;
+	}
+
+	@trusted size_t toHash() const nothrow {
+		return mData.hashOf;
 	}
 
 	@trusted ref T opIndex(size_t index)
