@@ -24,10 +24,29 @@ import std.typecons;
 
 alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
 
-struct Matrix(size_t r, size_t c, T = double)
+
+/+
+template is_solidwall(alias BoundaryType) {
+	enum bool is_solidwall = isInstanceOf!(SolidWall, BoundaryType);
+}
++/
+
+template is_matrix(alias M) {
+	enum bool is_matrix = hasMember!(M, "mData");
+}
+
+template can_add(alias RHS, alias LHS) {
+	enum bool can_add = (RHS.rows == LHS.rows) && (LHS.columns == RHS.columns);
+}
+
+template can_multiply(alias RHS, alias LHS) {
+	enum bool can_multiply = LHS.columns == RHS.rows;
+}
+
+struct Matrix(size_t r, size_t c, _T = double)
 {
 	alias ThisType = typeof(this);
-
+	alias T = _T;
 @nogc
 {
 	T[r*c] mData;
@@ -294,59 +313,14 @@ struct Matrix(size_t r, size_t c, T = double)
 		}
 	}
 	static if(!isArray!T) {
-		@trusted auto opBinary(string op, size_t ir, size_t ic, rhsType)(immutable Matrix!(ir, ic, rhsType) rhs) immutable
-		{
+
+		@trusted auto ref opBinary(string op, RHS)(auto ref RHS rhs) if(is_matrix!RHS) {
 			pragma(inline, true);
-			static if(op == "+" || op == "-")
-			{
-				static assert(ic == c, "Incompatible matricies");
-				static assert(ir == r, "Incompatible matricies");
-				
-				//auto res = Matrix!(r, ic, rhsType)(0);
-				static if(isArray!rhsType) {
-					static assert(false);
-					foreach(idx; 0..r*c) {
-						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
-					}
-				} else {
-					mixin("rhsType[r*ic] ret_data = (cast(immutable(rhsType)[])mData)[]"~op~"rhs.mData[];");
-				}
-				return Matrix!(r, ic, rhsType)(ret_data);
-			}
-			else static if(op == "*")
-			{
+			static if(op == "+" || op == "-") {
+				static assert(can_add!(RHS, ThisType), "Cannot add/subtract matrix of type "~RHS.stringof);
 
-				auto res = Matrix!(r, ic, rhsType)(0);
-				static assert(c == ir, "Incompatible matricies for multiplication");
-				
-				foreach(i; 0..r) {
-					foreach(j; 0..ic) {
-						foreach(k; 0..ir) {
-							static if(isArray!rhsType) {
-								rhsType tmp = mData[c*i + k]*rhs.mData[k*ic + j][];
-								rhsType tmp1 = res.mData[i*ic + j][] + tmp[];
-								res.mData[i*ic + j][] = tmp1[];
-							} else {
-								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
-							}
-						}
-					}
-				}
-
-				return res;
-			}
-			else static assert(0, "Operator not implimented");
-		}
-
-		@trusted Matrix!(r, ic, rhsType) opBinary(string op, size_t ir, size_t ic, rhsType)(ref Matrix!(ir, ic, rhsType) rhs)
-		{
-			pragma(inline, true);
-			static if(op == "+" || op == "-")
-			{
-				static assert(ic == c, "Incompatible matricies");
-				static assert(ir == r, "Incompatible matricies");
-				auto res = Matrix!(r, ic, rhsType)(0);
-				static if(isArray!rhsType) {
+				auto res = Matrix!(r, RHS.columns, T)(0);
+				static if(isArray!(RHS.T)) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
 					}
@@ -354,72 +328,29 @@ struct Matrix(size_t r, size_t c, T = double)
 					mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
 				}
 				return res;
-			}
-			else static if(op == "*")
-			{
 
-				auto res = Matrix!(r, ic, rhsType)(0);
-				static assert(c == ir, "Incompatible matricies for multiplication");
+			} else static if(op == "*") {
+				static assert(can_multiply!(RHS, ThisType), "Cannot mutliply matrix of type "~RHS.stringof);
+
+				auto res = Matrix!(r, RHS.columns, RHS.T)(0);
 				
 				foreach(i; 0..r) {
-					foreach(j; 0..ic) {
-						foreach(k; 0..ir) {
-							static if(isArray!rhsType) {
-								rhsType tmp = mData[c*i + k]*rhs.mData[k*ic + j][];
-								rhsType tmp1 = res.mData[i*ic + j][] + tmp[];
-								res.mData[i*ic + j][] = tmp1[];
+					foreach(j; 0..RHS.columns) {
+						foreach(k; 0..RHS.rows) {
+							static if(isArray!(RHS.T)) {
+								RHS.T tmp = mData[c*i + k]*rhs.mData[k*RHS.columns + j][];
+								RHS.T tmp1 = res.mData[i*ic + j][] + tmp[];
+								res.mData[i*RHS.columns + j][] = tmp1[];
 							} else {
-								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
+								res.mData[i*RHS.columns + j] += mData[c*i + k]*rhs.mData[k*RHS.columns + j];
 							}
 						}
 					}
 				}
 
 				return res;
-			}
-			else static assert(0, "Operator not implimented");
-		}
 
-		@trusted Matrix!(r, ic, T) opBinary(string op, size_t ir, size_t ic, rhsType)(Matrix!(ir, ic, rhsType) rhs)
-		{
-			pragma(inline, true);
-			static if(op == "+" || op == "-")
-			{
-				static assert(ic == c, "Incompatible matricies");
-				static assert(ir == r, "Incompatible matricies");
-				auto res = Matrix!(r, ic, rhsType)(0);
-				static if(isArray!rhsType) {
-					foreach(idx; 0..r*c) {
-						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
-					}
-				} else {
-					mixin("res.mData[] = mData[]"~op~"rhs.mData[];");
-				}
-				return res;
-			}
-			else static if(op == "*")
-			{
-
-				auto res = Matrix!(r, ic, rhsType)(0);
-				static assert(c == ir, "Incompatible matricies for multiplication");
-				
-				foreach(i; 0..r) {
-					foreach(j; 0..ic) {
-						foreach(k; 0..ir) {
-							static if(isArray!rhsType) {
-								rhsType tmp = mData[c*i + k]*rhs.mData[k*ic + j][];
-								rhsType tmp1 = res.mData[i*ic + j][] + tmp[];
-								res.mData[i*ic + j][] = tmp1[];
-							} else {
-								res.mData[i*ic + j] += mData[c*i + k]*rhs.mData[k*ic + j];
-							}
-						}
-					}
-				}
-
-				return res;
-			}
-			else static assert(0, "Operator not implimented");
+			} else static assert(false, "Operator not implimented");
 		}
 	}
 
@@ -569,7 +500,7 @@ struct Matrix(size_t r, size_t c, T = double)
 		else static assert(0, "Operator not implemented");
 	}
 
-	@trusted auto opBinaryRight(string op, _T)(_T lhs) immutable
+	@trusted auto opBinaryRight(string op, _T)(_T lhs) immutable if(!is_matrix!_T)
 	{
 		static if(op == "*" || op == "/")
 		{
@@ -871,6 +802,22 @@ struct Matrix(size_t r, size_t c, T = double)
 	{
 		static if(r == 3)
 		{
+			Vector!(3, T) cross(Vector!(3, T) rhs) immutable
+			{
+				auto res = Vector!(3, T)(0);
+				
+				static if(isArray!T) {
+					res.mData[0][] = mData[1][]*rhs.mData[2][] - mData[2][]*rhs.mData[1][];
+					res.mData[1][] = mData[2][]*rhs.mData[0][] - mData[0][]*rhs.mData[2][];
+					res.mData[2][] = mData[0][]*rhs.mData[1][] - mData[1][]*rhs.mData[0][];
+				} else {
+					res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
+					res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
+					res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+				}
+				return res;
+			}
+
 			Vector!(3, T) cross(Vector!(3, T) rhs)
 			{
 				auto res = Vector!(3, T)(0);
