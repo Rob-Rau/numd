@@ -28,15 +28,13 @@ Meshgrid!T meshgrid(T = double)(T[] x, T[] y)
 	return mesh;
 }
 
-T[] linspace(T = double)(T start, T end, int points)
+T[] linspace(T = double)(T start, T end, size_t points)
 {
-	//real h = (end-start)/(points-1);
-	T h = ((end-start)/(points)).to!T;
+	immutable h = (end-start)/(points - 1).to!T;
 	T[] x = new T[points];
 	x[0] = start;
-	for(int i = 1; i < points; i++)
-	{
-		x[i] = x[i-1]+h;
+	foreach(i; 1..points) {
+		x[i] = x[i - 1] + h;
 	}
 	return x;
 }
