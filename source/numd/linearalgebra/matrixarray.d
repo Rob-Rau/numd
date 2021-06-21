@@ -1,4 +1,4 @@
-module numd.linearalgebra.matrixarray;
+/+module numd.linearalgebra.matrixarray;
 
 import numd.linearalgebra.matrix;
 import numd.utility;
@@ -1290,3 +1290,4 @@ struct MatrixArray(size_t r, size_t c, T = double, uint line = __LINE__, string 
 		}+/
 	}
 }
++/

@@ -5,7 +5,7 @@ import std.conv;
 /++
 + This is the tolerance used when doing floating point comparisons.
 +/
-public double fpTol = 1.0e-16;
+//public double fpTol = 1.0e-16;
 
 struct Meshgrid(T = double)
 {

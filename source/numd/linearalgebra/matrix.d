@@ -1,14 +1,21 @@
-﻿module numd.linearalgebra.matrix;
+﻿@compute(CompileFor.hostAndDevice)
+module numd.linearalgebra.matrix;
 
-import numd.utility;
+//static import numd.utility;
+import numd.math;
 
-import std.algorithm;
-import std.conv;
-import std.math;
-import std.range;
-import std.stdio;
-import std.traits;
-import std.typecons;
+import ldc.dcompute;
+
+//import std.algorithm;
+//import std.conv;
+//import std.math : round;
+//import std.range;
+//import std.stdio;
+//import std.traits : std.traits.isArray, std.traits.isNumeric, std.traits.isFloatingPoint, std.traits.isIntegral;
+//import std.typecons : std.typecons.Nullable;
+
+static import std.traits;
+static import std.typecons;
 
 @safe @nogc unittest {
 	immutable pos1 = Vector!(3, size_t)(0, 1, 2);
@@ -22,7 +29,7 @@ import std.typecons;
 	assert(pos1 == pos3);
 }
 
-alias Vector(size_t l, T = double) = Matrix!(l, 1, T);
+alias Vector(size_t l, T = double, AddrSpace AS = AddrSpace.Generic) = Matrix!(l, 1, T, AS);
 
 
 /+
@@ -32,7 +39,7 @@ template is_solidwall(alias BoundaryType) {
 +/
 
 template is_matrix(alias M) {
-	enum bool is_matrix = hasMember!(M, "mData");
+	enum bool is_matrix = std.traits.hasMember!(M, "mData");
 }
 
 template can_add(alias RHS, alias LHS) {
@@ -43,13 +50,28 @@ template can_multiply(alias RHS, alias LHS) {
 	enum bool can_multiply = LHS.columns == RHS.rows;
 }
 
-struct Matrix(size_t r, size_t c, _T = double)
+struct Matrix(size_t r, size_t c, _T = double, AddrSpace AS = AddrSpace.Generic)
 {
 	alias ThisType = typeof(this);
 	alias T = _T;
 @nogc
 {
-	T[r*c] mData;
+	/*static if(AS == AddrSpace.Shared) {
+		Pointer!(AS, T) mData;
+	} else {*/
+		Variable!(AS, T[r*c]) mData;
+	//}
+	
+
+	this(Matrix!(r, c, _T, AddrSpace.Global) m)
+	{
+		mData[] = m.mData[];
+	}
+
+	this(Matrix!(r, c, _T, AddrSpace.Shared) m)
+	{
+		mData[] = m.mData[];
+	}
 
 	this(const T[] values)
 	{
@@ -68,7 +90,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 
 	this(T init)
 	{
-		static if(isArray!T) {
+		static if(std.traits.isArray!T) {
 			foreach(idx; 0..r*c) {
 				mData[idx][] = init[];
 			}
@@ -77,7 +99,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		}
 	}
 
-	static if(isArray!T) {
+	static if(std.traits.isArray!T) {
 		this(ForeachType!T init)
 		{
 			foreach(idx; 0..r*c) {
@@ -94,9 +116,13 @@ struct Matrix(size_t r, size_t c, _T = double)
 		return equal;
 	}
 
-	@trusted size_t toHash() const nothrow {
-		return mData.hashOf;
-	}
+	/+@trusted size_t toHash() const nothrow {
+		if(__dcompute_reflect(ReflectTarget.Host)) {
+			return mData.hashOf;
+		} else {
+			return 0;
+		}
+	}+/
 
 	@trusted ref T opIndex(size_t index)
 	{
@@ -118,7 +144,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 
 	@trusted void opIndexAssign(T element, size_t index)
 	{
-		static if(isArray!T) {
+		static if(std.traits.isArray!T) {
 			mData[index][] = element[];
 		} else {
 			mData[index] = element;
@@ -128,7 +154,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 	@trusted void opIndexOpAssign(string op)(T element, size_t index)
 	{
 		assert(index < r*c);
-		static if(isArray!T) {
+		static if(std.traits.isArray!T) {
 			mixin("mData[index][] "~op~"= element[];");
 		} else {
 			mixin("mData[index] "~op~"= element;");
@@ -171,7 +197,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		assert(col < c);
 
 		size_t idx = row*c + col;
-		static if(isArray!T) {
+		static if(std.traits.isArray!T) {
 			mData[idx][] = element[];
 		} else {
 			mData[idx] = element;
@@ -185,7 +211,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		assert(col < c);
 
 		size_t idx = row*c + col;
-		static if(isArray!T) {
+		static if(std.traits.isArray!T) {
 			mixin("mData[idx][] "~op~"= element[];");
 		} else {
 			mixin("mData[idx] "~op~"= element;");
@@ -211,7 +237,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		return mData[a..b];
 	}
 
-	static if(isArray!T) {
+	static if(std.traits.isArray!T) {
 		@trusted Matrix!(r, ic, T) opBinary(string op, size_t ir, size_t ic, rhsType)(ref Matrix!(ir, ic, rhsType) rhs)
 		{
 			pragma(inline, true);
@@ -220,11 +246,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 				static assert(ic == c, "Incompatible matricies");
 				static assert(ir == r, "Incompatible matricies");
 				auto res = ThisType(0);
-				static if(isArray!T && isArray!rhsType) {
+				static if(std.traits.isArray!T && std.traits.isArray!rhsType) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx][];");
 					}
-				} else static if(isArray!T && !isArray!rhsType) {
+				} else static if(std.traits.isArray!T && !std.traits.isArray!rhsType) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx];");
 					}
@@ -242,11 +268,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 				foreach(i; 0..r) {
 					foreach(j; 0..ic) {
 						foreach(k; 0..ir) {
-							static if(isArray!T && isArray!rhsType) {
+							static if(std.traits.isArray!T && std.traits.isArray!rhsType) {
 								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j][];
 								T tmp1 = res.mData[i*ic + j][] + tmp[];
 								res.mData[i*ic + j][] = tmp1[];
-							} else static if(isArray!T && !isArray!rhsType) {
+							} else static if(std.traits.isArray!T && !std.traits.isArray!rhsType) {
 								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j];
 								T tmp1 = res.mData[i*ic + j][] + tmp[];
 								res.mData[i*ic + j][] = tmp1[];
@@ -270,11 +296,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 				static assert(ic == c, "Incompatible matricies");
 				static assert(ir == r, "Incompatible matricies");
 				auto res = ThisType(0);
-				static if(isArray!T && isArray!rhsType) {
+				static if(std.traits.isArray!T && std.traits.isArray!rhsType) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx][];");
 					}
-				} else static if(isArray!T && !isArray!rhsType) {
+				} else static if(std.traits.isArray!T && !std.traits.isArray!rhsType) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs.mData[idx];");
 					}
@@ -292,11 +318,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 				foreach(i; 0..r) {
 					foreach(j; 0..ic) {
 						foreach(k; 0..ir) {
-							static if(isArray!T && isArray!rhsType) {
+							static if(std.traits.isArray!T && std.traits.isArray!rhsType) {
 								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j][];
 								T tmp1 = res.mData[i*ic + j][] + tmp[];
 								res.mData[i*ic + j][] = tmp1[];
-							} else static if(isArray!T && !isArray!rhsType) {
+							} else static if(std.traits.isArray!T && !std.traits.isArray!rhsType) {
 								T tmp = mData[c*i + k][]*rhs.mData[k*ic + j];
 								T tmp1 = res.mData[i*ic + j][] + tmp[];
 								res.mData[i*ic + j][] = tmp1[];
@@ -312,15 +338,15 @@ struct Matrix(size_t r, size_t c, _T = double)
 			else static assert(0, "Operator not implimented");
 		}
 	}
-	static if(!isArray!T) {
+	static if(!std.traits.isArray!T) {
 
 		@trusted auto ref opBinary(string op, RHS)(auto ref RHS rhs) if(is_matrix!RHS) {
 			pragma(inline, true);
 			static if(op == "+" || op == "-") {
 				static assert(can_add!(RHS, ThisType), "Cannot add/subtract matrix of type "~RHS.stringof);
 
-				auto res = Matrix!(r, RHS.columns, T)(0);
-				static if(isArray!(RHS.T)) {
+				auto res = RHS(0);
+				static if(std.traits.isArray!(RHS.T)) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx]"~op~"rhs.mData[idx][];");
 					}
@@ -337,7 +363,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 				foreach(i; 0..r) {
 					foreach(j; 0..RHS.columns) {
 						foreach(k; 0..RHS.rows) {
-							static if(isArray!(RHS.T)) {
+							static if(std.traits.isArray!(RHS.T)) {
 								RHS.T tmp = mData[c*i + k]*rhs.mData[k*RHS.columns + j][];
 								RHS.T tmp1 = res.mData[i*ic + j][] + tmp[];
 								res.mData[i*RHS.columns + j][] = tmp1[];
@@ -359,7 +385,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		static if(op == "*" || op == "/")
 		{
 			auto res = ThisType(0);
-			static if(isArray!T) {
+			static if(std.traits.isArray!T) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = mData[idx][]"~op~"rhs[];");
 				}
@@ -372,13 +398,13 @@ struct Matrix(size_t r, size_t c, _T = double)
 		else static assert(0, "Operator not implemented");
 	}
 
-	static if(isArray!T) {
+	static if(std.traits.isArray!T) {
 		@trusted inout ThisType opBinary(string op)(ForeachType!T rhs)
 		{
 			static if(op == "*" || op == "/")
 			{
 				auto res = ThisType(0);
-				static if(isArray!T) {
+				static if(std.traits.isArray!T) {
 					foreach(idx; 0..r*c) {
 						mixin("res.mData[idx][] = mData[idx][]"~op~"rhs;");
 					}
@@ -402,9 +428,9 @@ struct Matrix(size_t r, size_t c, _T = double)
 			for(int i = 0; i < ir; i++) {
 				for(int j = 0; j < c; j++) {
 					for(int k = 0; k < ic; k++) {
-						static if(isArray!T && isArray!lhsType) {
+						static if(std.traits.isArray!T && std.traits.isArray!lhsType) {
 							res.mData[i*c + j][] += lhs.mData[ic*i + k][]*mData[k*c + j][];
-						} else static if(isArray!T && !isArray!lhsType) {
+						} else static if(std.traits.isArray!T && !std.traits.isArray!lhsType) {
 							res.mData[i*c + j][] += lhs.mData[ic*i + k]*mData[k*c + j][];
 						} else {
 							res.mData[i*c + j] += lhs.mData[ic*i + k]*mData[k*c + j];
@@ -419,11 +445,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 		{
 			static assert((ic == c) && (ir == r), "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
 			auto res = Matrix!(ir, c, T)(0);
-			static if(isArray!T && isArray!lhsType) {
+			static if(std.traits.isArray!T && std.traits.isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx][];");
 				}
-			} static if(isArray!T && !isArray!lhsType) {
+			} static if(std.traits.isArray!T && !std.traits.isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx] "~op~" mData[idx][];");
 				}
@@ -447,9 +473,9 @@ struct Matrix(size_t r, size_t c, _T = double)
 			for(int i = 0; i < ir; i++) {
 				for(int j = 0; j < c; j++) {
 					for(int k = 0; k < ic; k++) {
-						static if(isArray!T && isArray!lhsType) {
+						static if(std.traits.isArray!T && std.traits.isArray!lhsType) {
 							res.mData[i*c + j][] += lhs.mData[ic*i + k][]*mData[k*c + j][];
-						} else static if(isArray!T && !isArray!lhsType) {
+						} else static if(std.traits.isArray!T && !std.traits.isArray!lhsType) {
 							res.mData[i*c + j][] += lhs.mData[ic*i + k]*mData[k*c + j][];
 						} else {
 							res.mData[i*c + j] += lhs.mData[ic*i + k]*mData[k*c + j];
@@ -464,11 +490,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 		{
 			static assert((ic == c) && (ir == r), "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
 			auto res = Matrix!(ir, c, T)(0);
-			static if(isArray!T && isArray!lhsType) {
+			static if(std.traits.isArray!T && std.traits.isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx][];");
 				}
-			} static if(isArray!T && !isArray!lhsType) {
+			} static if(std.traits.isArray!T && !std.traits.isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx] "~op~" mData[idx][];");
 				}
@@ -487,7 +513,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		static if(op == "*" || op == "/")
 		{
 			auto res = ThisType(0);
-			static if(isArray!T) {
+			static if(std.traits.isArray!T) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs[]"~op~"mData[idx][];");
 				}
@@ -507,7 +533,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 			alias RT = typeof(mixin("mData[0]"~op~"lhs"));
 			alias RetType = Matrix!(r, c, RT);
 			auto res = RetType(0);
-			static if(isArray!T) {
+			static if(std.traits.isArray!T) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs[]"~op~"mData[idx][];");
 				}
@@ -524,7 +550,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 	{
 		for(int i = 0; i < r*c; i++)
 		{
-			static if(isArray!T) {
+			static if(std.traits.isArray!T) {
 				foreach(sub_idx; 0..mData[i].length) {
 					if(abs(mData[i][sub_idx] - o.mData[i][sub_idx]) > fpTol)
 						return false;
@@ -541,7 +567,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 	{
 		for(int i = 0; i < r*c; i++)
 		{
-			static if(isArray!T) {
+			static if(std.traits.isArray!T) {
 				foreach(sub_idx; 0..mData[i].length) {
 					if(abs(mData[i][sub_idx] - o.mData[i][sub_idx]) > fpTol)
 						return false;
@@ -554,8 +580,8 @@ struct Matrix(size_t r, size_t c, _T = double)
 		return true;
 	}
 
-	static if(!isArray!T) {
-		@trusted ThisType rref()
+	static if(!std.traits.isArray!T) {
+		/+@trusted ThisType rref()
 		{
 			auto rref = ThisType(mData);
 
@@ -620,7 +646,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 				}
 			}
 			return rref;
-		}
+		}+/
 	}
 
 	@trusted inout Matrix!(c, r, T) transpose()
@@ -632,7 +658,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 			// Loop over new cols
 			for(int j = 0; j < r; j++)
 			{
-				static if(isArray!T) {
+				static if(std.traits.isArray!T) {
 					ret.mData[i*r+j][] = mData[j*c + i][];
 				} else {
 					ret.mData[i*r+j] = mData[j*c + i];
@@ -648,104 +674,205 @@ struct Matrix(size_t r, size_t c, _T = double)
 	{
 		@trusted static ThisType identity()
 		{
-			auto ident = ThisType(0);
-			for(int i = 0; i < r*c; i += r+1)
+			// This is required due to a dcompute bug, probably in ldc
+			static if(c == r)
 			{
-				ident.mData[i] = 1;
+				auto ident = ThisType(0);
+				for(int i = 0; i < r*c; i += r+1)
+				{
+					ident.mData[i] = 1;
+				}
+				return ident;
 			}
-			return ident;
 		}
 
-		static if(!isArray!T) {
-			@trusted Nullable!ThisType inverse()
+		static if(!std.traits.isArray!T) {
+			/+@trusted std.typecons.Nullable!ThisType inverse()
 			{
-				auto inv = identity();
-				auto rref = ThisType(mData);
+				static if(c == r) {
+					auto inv = identity();
+					auto rref = ThisType(mData);
 
-				int currRow = 0, currCol = 0;
-				while((currRow < r) && (currCol < c))
-				{
-					if(abs(rref.mData[currRow*c + currCol]) > fpTol)
+					int currRow = 0, currCol = 0;
+					while((currRow < r) && (currCol < c))
 					{
-						T[] row, invRow;
-						row = rref.mData[currRow*c..currRow*c+c];
-						invRow = inv.mData[currRow*c..currRow*c+c];
-						// Normalize row so first entry is 1
-						if(abs(rref.mData[currRow*c + currCol] - 1) > fpTol)
+						if(abs(rref.mData[currRow*c + currCol]) > fpTol)
 						{
-							auto first = rref.mData[currRow*c + currCol];
-							row[] /= first;
-							invRow[] /= first;
-						}
-						// Find all non-zero rows in this column and scale the current 
-						// row by the value in other row, then subtract current row from
-						// from other
-						for(int j = 0; j < r; j++)
-						{
-							if(j != currRow)
+							T[] row, invRow;
+							row = rref.mData[currRow*c..currRow*c+c];
+							invRow = inv.mData[currRow*c..currRow*c+c];
+							// Normalize row so first entry is 1
+							if(abs(rref.mData[currRow*c + currCol] - 1) > fpTol)
 							{
-								T[] nextRow, invNexRow;
-								nextRow = rref.mData[j*c..j*c+c];
-								invNexRow = inv.mData[j*c..j*c+c];
+								auto first = rref.mData[currRow*c + currCol];
+								row[] /= first;
+								invRow[] /= first;
+							}
+							// Find all non-zero rows in this column and scale the current 
+							// row by the value in other row, then subtract current row from
+							// from other
+							for(int j = 0; j < r; j++)
+							{
+								if(j != currRow)
+								{
+									T[] nextRow, invNexRow;
+									nextRow = rref.mData[j*c..j*c+c];
+									invNexRow = inv.mData[j*c..j*c+c];
 
+									if(abs(rref.mData[j*c + currCol]) > fpTol)
+									{
+										auto first = rref.mData[j*c + currCol];
+										nextRow[] -= (first*row[])[];
+										invNexRow[] -= (first*invRow[])[];
+									}
+								}
+							}
+							currRow++;
+							currCol++;
+						}
+						else if((currRow == r-1) && (currCol == c - 1))
+						{
+							currCol++;
+						}
+						// See if there is a row that has a non-zero entry further down
+						// if so swap it with current row
+						else
+						{
+							for(int j = (currRow+1); j < r; j++)
+							{
+								// Swap this row with current row
 								if(abs(rref.mData[j*c + currCol]) > fpTol)
 								{
-									auto first = rref.mData[j*c + currCol];
-									nextRow[] -= (first*row[])[];
-									invNexRow[] -= (first*invRow[])[];
+									T[c] swapRow, invSwapRow;
+									swapRow[] = rref.mData[j*c..j*c+c];
+									invSwapRow[] = inv.mData[j*c..j*c+c];
+
+									rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
+									inv.mData[j*c..j*c+c] = inv.mData[currRow*c..currRow*c+c];
+
+									rref.mData[currRow*c..currRow*c+c] = swapRow[];
+									inv.mData[currRow*c..currRow*c+c] = invSwapRow[];
+									break;
+								}
+								// All entries in this column are 0, move on
+								else if(j == r-1)
+								{
+									currCol++;
 								}
 							}
 						}
-						currRow++;
-						currCol++;
 					}
-					else if((currRow == r-1) && (currCol == c - 1))
+
+					import std.algorithm : fold;
+					auto allZeros = rref.mData[$-c..$].fold!((a, b) => (fabs(b) <= fpTol) && a)(true);
+
+					if(allZeros)
 					{
-						currCol++;
+						return std.typecons.Nullable!ThisType();
 					}
-					// See if there is a row that has a non-zero entry further down
-					// if so swap it with current row
 					else
 					{
-						for(int j = (currRow+1); j < r; j++)
-						{
-							// Swap this row with current row
-							if(abs(rref.mData[j*c + currCol]) > fpTol)
-							{
-								T[c] swapRow, invSwapRow;
-								swapRow[] = rref.mData[j*c..j*c+c];
-								invSwapRow[] = inv.mData[j*c..j*c+c];
-
-								rref.mData[j*c..j*c+c] = rref.mData[currRow*c..currRow*c+c];
-								inv.mData[j*c..j*c+c] = inv.mData[currRow*c..currRow*c+c];
-
-								rref.mData[currRow*c..currRow*c+c] = swapRow[];
-								inv.mData[currRow*c..currRow*c+c] = invSwapRow[];
-								break;
-							}
-							// All entries in this column are 0, move on
-							else if(j == r-1)
-							{
-								currCol++;
-							}
-						}
+						return inv.nullable!ThisType;
 					}
 				}
-
-				import std.algorithm : fold;
-				auto allZeros = rref.mData[$-c..$].fold!((a, b) => (fabs(b) <= fpTol) && a)(true);
-
-				if(allZeros)
-				{
-					return Nullable!ThisType();
-				}
-				else
-				{
-					return inv.nullable!ThisType;
-				}
-			}
+			}+/
 		}
 	}
+
+	ref ThisType opAssign(Matrix!(r, c, _T, AddrSpace.Generic) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(immutable Matrix!(r, c, _T, AddrSpace.Generic) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(ref Matrix!(r, c, _T, AddrSpace.Generic) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+
+
+
+
+	ref ThisType opAssign(Matrix!(r, c, _T, AddrSpace.Shared) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(immutable Matrix!(r, c, _T, AddrSpace.Shared) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(ref Matrix!(r, c, _T, AddrSpace.Shared) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+
+
+
+
+
+	ref ThisType opAssign(Matrix!(r, c, _T, AddrSpace.Global) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(immutable Matrix!(r, c, _T, AddrSpace.Global) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+	ref ThisType opAssign(ref Matrix!(r, c, _T, AddrSpace.Global) rhs)
+	{
+		//mData[] = rhs.mData[];
+		for(size_t idx = 0; idx < r*c; idx++) {
+			mData[idx] = rhs.mData[idx];
+		}
+		return this;
+	}
+
+
+
+
+
 
 	ref ThisType opAssign(const T[r*c] rhs)
 	{
@@ -780,7 +907,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 	ThisType opUnary(string s)() immutable if (s == "-")
 	{
 		auto neg = ThisType(0);
-		static if(isArray!T) {
+		static if(std.traits.isArray!T) {
 			foreach(idx, ref arr; mData[]) {
 				neg.mData[idx][] = -arr[];
 			}
@@ -804,263 +931,300 @@ struct Matrix(size_t r, size_t c, _T = double)
 		{
 			Vector!(3, T) cross(Vector!(3, T) rhs) immutable
 			{
-				auto res = Vector!(3, T)(0);
-				
-				static if(isArray!T) {
-					res.mData[0][] = mData[1][]*rhs.mData[2][] - mData[2][]*rhs.mData[1][];
-					res.mData[1][] = mData[2][]*rhs.mData[0][] - mData[0][]*rhs.mData[2][];
-					res.mData[2][] = mData[0][]*rhs.mData[1][] - mData[1][]*rhs.mData[0][];
-				} else {
-					res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
-					res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
-					res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+				static if(c == 1 && r == 3) {
+					auto res = Vector!(3, T)(0);
+					
+					static if(std.traits.isArray!T) {
+						res.mData[0][] = mData[1][]*rhs.mData[2][] - mData[2][]*rhs.mData[1][];
+						res.mData[1][] = mData[2][]*rhs.mData[0][] - mData[0][]*rhs.mData[2][];
+						res.mData[2][] = mData[0][]*rhs.mData[1][] - mData[1][]*rhs.mData[0][];
+					} else {
+						res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
+						res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
+						res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+					}
+					return res;
 				}
-				return res;
 			}
 
 			Vector!(3, T) cross(Vector!(3, T) rhs)
 			{
-				auto res = Vector!(3, T)(0);
-				
-				static if(isArray!T) {
-					res.mData[0][] = mData[1][]*rhs.mData[2][] - mData[2][]*rhs.mData[1][];
-					res.mData[1][] = mData[2][]*rhs.mData[0][] - mData[0][]*rhs.mData[2][];
-					res.mData[2][] = mData[0][]*rhs.mData[1][] - mData[1][]*rhs.mData[0][];
-				} else {
-					res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
-					res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
-					res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+				static if(c == 1 && r == 3) {
+					auto res = Vector!(3, T)(0);
+					
+					static if(std.traits.isArray!T) {
+						res.mData[0][] = mData[1][]*rhs.mData[2][] - mData[2][]*rhs.mData[1][];
+						res.mData[1][] = mData[2][]*rhs.mData[0][] - mData[0][]*rhs.mData[2][];
+						res.mData[2][] = mData[0][]*rhs.mData[1][] - mData[1][]*rhs.mData[0][];
+					} else {
+						res.mData[0] = mData[1]*rhs.mData[2] - mData[2]*rhs.mData[1];
+						res.mData[1] = mData[2]*rhs.mData[0] - mData[0]*rhs.mData[2];
+						res.mData[2] = mData[0]*rhs.mData[1] - mData[1]*rhs.mData[0];
+					}
+					return res;
 				}
-				return res;
 			}
 		}
 		
 		inout T dot(ref inout Vector!(r, T) rhs)
 		{
-			T res = 0;
-			for(size_t i = 0; i < r; i++) {
-				static if(isArray!T) {
-					res[] += mData[i][]*rhs.mData[i][];
-				} else {
-					res += mData[i]*rhs.mData[i];
+			static if(c == 1) {
+				T res = 0;
+				for(size_t i = 0; i < r; i++) {
+					static if(std.traits.isArray!T) {
+						res[] += mData[i][]*rhs.mData[i][];
+					} else {
+						res += mData[i]*rhs.mData[i];
+					}
 				}
+				
+				return res;
 			}
-			
-			return res;
 		}
 
 		inout T dot(Vector!(r, T) rhs)
 		{
-			T res = 0;
-			for(size_t i = 0; i < r; i++) {
-				static if(isArray!T) {
-					res[] += mData[i][]*rhs.mData[i][];
-				} else {
-					res += mData[i]*rhs.mData[i];
+			static if(c == 1) {
+				T res = 0;
+				for(size_t i = 0; i < r; i++) {
+					static if(std.traits.isArray!T) {
+						res[] += mData[i][]*rhs.mData[i][];
+					} else {
+						res += mData[i]*rhs.mData[i];
+					}
 				}
-			}
 
-			return res;
+				return res;
+			}
 		}
 
 		inout T dot(alias vector)()
 		{
-			T res = 0;
-			for(size_t i = 0; i < r; i++) {
-				static if(isArray!T) {
-					res[] += mData[i][]*vector.mData[i][];
-				} else {
-					res += mData[i]*vector.mData[i];
-				}
-			}
-
-			return res;
-		}
-
-		static if(isArray!T) {
-			inout T dot(ref inout Vector!(r, ForeachType!T) rhs)
-			{
+			static if(c == 1) {
 				T res = 0;
 				for(size_t i = 0; i < r; i++) {
-					res[] += mData[i][]*rhs.mData[i];
+					static if(std.traits.isArray!T) {
+						res[] += mData[i][]*vector.mData[i][];
+					} else {
+						res += mData[i]*vector.mData[i];
+					}
 				}
+
 				return res;
 			}
 		}
 
-		T magnitude() immutable
+		static if(std.traits.isArray!T) {
+			inout T dot(ref inout Vector!(r, ForeachType!T) rhs)
+			{
+				static if(c == 1) {
+					T res = 0;
+					for(size_t i = 0; i < r; i++) {
+						res[] += mData[i][]*rhs.mData[i];
+					}
+					return res;
+				}
+			}
+		}
+
+		@safe T magnitude() immutable
 		{
-			static if(isArray!T) {
-				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+			static if(c == 1) {
+				static if(std.traits.isArray!T) {
+					static assert(std.traits.isNumeric!(ForeachType!T), "T is not a numeric type.");
+					
+					T res = 0;
+					foreach(ref element; mData)
+						res[] += element[]*element[];
 				
-				T res = 0;
-				foreach(ref element; mData)
-					res[] += element[]*element[];
-			
-				static if(isFloatingPoint!(ForeachType!T)) {
-					foreach(ref mag_i ; res) {
-						mag_i = sqrt(mag_i);
+					static if(std.traits.isFloatingPoint!(ForeachType!T)) {
+						foreach(ref mag_i ; res) {
+							mag_i = sqrt(mag_i);
+						}
+					} else static if(std.traits.isIntegral!(ForeachType!T)) {
+						// cast to double if we are not a floating point type and round result.
+						foreach(ref mag_i ; res) {
+							mag_i = cast(ForeachType!T)round(sqrt(cast(double)mag_i));
+						}
+					} else {
+						foreach(ref mag_i ; res) {
+							mag_i = cast(ForeachType!T)sqrt(cast(double)mag_i);
+						}
 					}
-				} else static if(isIntegral!(ForeachType!T)) {
-					// cast to double if we are not a floating point type and round result.
-					foreach(ref mag_i ; res) {
-						mag_i = cast(ForeachType!T)round(sqrt(cast(double)mag_i));
-					}
+					return res;
+
 				} else {
-					foreach(ref mag_i ; res) {
-						mag_i = cast(ForeachType!T)sqrt(cast(double)mag_i);
+					static assert(std.traits.isNumeric!T, "T is not a numeric type.");
+
+					T res = 0;
+					foreach(ref element; mData)
+						res += element*element;
+					
+					static if(std.traits.isFloatingPoint!T) {
+						res = sqrt(res);
+					} else static if(std.traits.isIntegral!T) {
+						// cast to double if we are not a floating point type and round result.
+						res = cast(T)round(sqrt(cast(double)res));
+					} else {
+						res = cast(T)sqrt(cast(double)res);
 					}
+					return res;
+
 				}
-				return res;
-
-			} else {
-				static assert(isNumeric!T, "T is not a numeric type.");
-
-				T res = 0;
-				foreach(ref element; mData)
-					res += element*element;
-				
-				static if(isFloatingPoint!T) {
-					res = sqrt(res);
-				} else static if(isIntegral!T) {
-					// cast to double if we are not a floating point type and round result.
-					res = cast(T)round(sqrt(cast(double)res));
-				} else {
-					res = cast(T)sqrt(cast(double)res);
-				}
-				return res;
-
 			}
 		}
 
 		T magnitude()
 		{
-			/+static assert(isNumeric!T, "T is not a numeric type.");
-
-			T res = 0;
-			foreach(ref element; mData)
-				res += element*element;
-			
-			static if(isFloatingPoint!T) {
-				res = sqrt(res);
-			} else static if(isIntegral!T) {
-				// cast to double if we are not a floating point type and round result.
-				res = cast(T)round(sqrt(cast(double)res));
-			} else {
-				res = cast(T)sqrt(cast(double)res);
-			}
-			return res;+/
-			static if(isArray!T) {
-				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
-				
-				T res = 0;
-				foreach(ref element; mData)
-					res[] += element[]*element[];
-			
-				static if(isFloatingPoint!(ForeachType!T)) {
-					foreach(ref mag_i ; res) {
-						mag_i = sqrt(mag_i);
-					}
-				} else static if(isIntegral!(ForeachType!T)) {
-					// cast to double if we are not a floating point type and round result.
-					foreach(ref mag_i ; res) {
-						mag_i = cast(ForeachType!T)round(sqrt(cast(double)mag_i));
-					}
-				} else {
-					foreach(ref mag_i ; res) {
-						mag_i = cast(ForeachType!T)sqrt(cast(double)mag_i);
-					}
-				}
-				return res;
-
-			} else {
-				static assert(isNumeric!T, "T is not a numeric type.");
+			static if(c == 1) {
+				/+static assert(std.traits.isNumeric!T, "T is not a numeric type.");
 
 				T res = 0;
 				foreach(ref element; mData)
 					res += element*element;
 				
-				static if(isFloatingPoint!T) {
+				static if(std.traits.isFloatingPoint!T) {
 					res = sqrt(res);
-				} else static if(isIntegral!T) {
+				} else static if(std.traits.isIntegral!T) {
 					// cast to double if we are not a floating point type and round result.
 					res = cast(T)round(sqrt(cast(double)res));
 				} else {
 					res = cast(T)sqrt(cast(double)res);
 				}
-				return res;
+				return res;+/
+				static if(std.traits.isArray!T) {
+					static assert(std.traits.isNumeric!(ForeachType!T), "T is not a numeric type.");
+					
+					T res = 0;
+					foreach(ref element; mData)
+						res[] += element[]*element[];
+				
+					static if(std.traits.isFloatingPoint!(ForeachType!T)) {
+						foreach(ref mag_i ; res) {
+							mag_i = sqrt(mag_i);
+						}
+					} else static if(std.traits.isIntegral!(ForeachType!T)) {
+						// cast to double if we are not a floating point type and round result.
+						foreach(ref mag_i ; res) {
+							mag_i = cast(ForeachType!T)round(sqrt(cast(double)mag_i));
+						}
+					} else {
+						foreach(ref mag_i ; res) {
+							mag_i = cast(ForeachType!T)sqrt(cast(double)mag_i);
+						}
+					}
+					return res;
 
+				} else {
+					static assert(std.traits.isNumeric!T, "T is not a numeric type.");
+
+					T res = 0;
+					foreach(ref element; mData)
+						res += element*element;
+					
+					static if(std.traits.isFloatingPoint!T) {
+						res = sqrt(res);
+					} else static if(std.traits.isIntegral!T) {
+						// cast to double if we are not a floating point type and round result.
+						res = cast(T)round(sqrt(cast(double)res));
+					} else {
+						res = cast(T)sqrt(cast(double)res);
+					}
+					return res;
+
+				}
 			}
-
 		}
 		
 		T magnitude_squared() immutable
 		{
+			static if(c == 1) {
 			T res = 0;
-			static if(isArray!T) {
-				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+			static if(std.traits.isArray!T) {
+				static assert(std.traits.isNumeric!(ForeachType!T), "T is not a numeric type.");
 
 				foreach(ref element; mData)
 					res[] += element[]*element[];
 			} else {
-				static assert(isNumeric!T, "T is not a numeric type.");
+				static assert(std.traits.isNumeric!T, "T is not a numeric type.");
 
 				foreach(ref element; mData)
 					res += element*element;
 			}
 			return res;
+			}
 		}
 
 		T magnitude_squared()
 		{
+			static if(c == 1) {
 			T res = 0;
-			static if(isArray!T) {
-				static assert(isNumeric!(ForeachType!T), "T is not a numeric type.");
+			static if(std.traits.isArray!T) {
+				static assert(std.traits.isNumeric!(ForeachType!T), "T is not a numeric type.");
 
 				foreach(ref element; mData)
 					res[] += element[]*element[];
 			} else {
-				static assert(isNumeric!T, "T is not a numeric type.");
+				static assert(std.traits.isNumeric!T, "T is not a numeric type.");
 
 				foreach(ref element; mData)
 					res += element*element;
 			}
 			return res;
+			}
 
 		}
 
 		ThisType normalize()
 		{
-			auto res = Vector!(r, T)(0);
-			static if(isArray!T) {
+			static if(c == 1) {
+			auto res = Vector!(r, T, AS)(0);
+			static if(std.traits.isArray!T) {
 				immutable T mag = 1/magnitude[];
 				foreach(idx; 0..mag.length) {
 					res.mData[idx][] = mData[idx][]*mag[];
 				}
 			} else {
 				immutable mag = 1/magnitude;
-				res.mData[] = mData[]*mag;
+
+				if(__dcompute_reflect(ReflectTarget.Host)) {
+					res.mData[] = mData[]*mag;
+				} else {
+					foreach(idx, ref r; res.mData) {
+						r = mData[idx]*mag;
+					}
+				}
 			}
 			return res;
+			}
 		}
 
 		ThisType normalize() immutable
 		{
+			static if(c == 1) {
 			/+auto res = Vector!(r, T)(0);
 			immutable mag = 1/magnitude;
 			res.mData[] = mData[]*mag;
 			return res;+/
-			auto res = Vector!(r, T)(0);
-			static if(isArray!T) {
+			auto res = Vector!(r, T, AS)(0);
+			static if(std.traits.isArray!T) {
 				immutable T mag = 1/magnitude[];
 				foreach(idx; 0..mag.length) {
 					res.mData[idx][] = mData[idx][]*mag[];
 				}
 			} else {
 				immutable mag = 1/magnitude;
-				res.mData[] = mData[]*mag;
+				//res.mData[] = mData[]*mag;
+				if(__dcompute_reflect(ReflectTarget.Host)) {
+					res.mData[] = mData[]*mag;
+				} else {
+					foreach(idx, ref r; res.mData) {
+						r = mData[idx]*mag;
+					}
+				}
 			}
 			return res;
+			}
 		}
 	}
 
@@ -1068,26 +1232,31 @@ struct Matrix(size_t r, size_t c, _T = double)
 	enum size_t columns = c;
 
 }
-	string toString()
+	/+string toString()
 	{
-		import std.format : format;
-		import std.string : rightJustify;
-		string matStr;
-		
-		for(int i = 0; i < r; i++)
-		{
-			matStr ~= "[";
-			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ mData[i*c + j].format!"%s";
+		if(__dcompute_reflect(ReflectTarget.Host)) {
+			/+import std.format : format;
+			import std.string : rightJustify;
+			string matStr;
 			
-			matStr ~= " ]";
+			for(int i = 0; i < r; i++)
+			{
+				matStr ~= "[";
+				for(int j = 0; j < c; j++)
+					matStr ~= " " ~ mData[i*c + j].format!"%s";
+				
+				matStr ~= " ]";
+			}
+			return matStr;+/
+			return "";
+		} else {
+			return "";
 		}
-		return matStr;
-	}
+	}+/
 }
 
 // opEquals
-@nogc @safe unittest
+@nogc unittest
 {
 	auto m1 = Matrix!(3, 2)(25, 28,
 		57, 64,
@@ -1095,9 +1264,13 @@ struct Matrix(size_t r, size_t c, _T = double)
 	auto m2 = Matrix!(3, 2)(25, 28,
 		57, 64,
 		89, 100);
-	assert(m1 == m2, "Matrix equality test failed");
+	if(__dcompute_reflect(ReflectTarget.Host)) {
+		assert(m1 == m2, "Matrix equality test failed");
+	} else {
+		assert(m1 == m2);
+	}
 }
-
+/+
 // identity matrix generation test.
 @nogc @safe unittest
 {
@@ -1303,7 +1476,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 
 	auto m3 = Matrix!(3, 3)(0, 4, 5, 0, 0, 7, 0, 3, 1);
 	auto m4 = m3.inverse();
-	assert(m4.isNull, "Matrix inverse test failed, should have been empty Nullable");
+	assert(m4.isNull, "Matrix inverse test failed, should have been empty std.typecons.Nullable");
 }
 
 @nogc @safe unittest
@@ -1339,3 +1512,4 @@ struct Matrix(size_t r, size_t c, _T = double)
 	auto expected = Vector!(3)(-3, 6, -3);
 	assert(vec3 == expected, "Vector cross product failed");
 }
++/

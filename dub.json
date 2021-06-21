@@ -4,6 +4,9 @@
 	"copyright": "Copyright © 2016, Robert F. Rau II",
 	"authors": ["Rob Rau"],
 	"targetType": "sourceLibrary",
+	"dependencies": {
+        "dcompute"  : "~master"
+    },
 	"buildTypes": {
 		"unittest": {
 			"buildOptions": ["unittests", "debugMode", "debugInfo"]
