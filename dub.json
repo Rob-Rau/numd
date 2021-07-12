@@ -3,7 +3,7 @@
 	"description": "A numerical computing package for D",
 	"copyright": "Copyright © 2016, Robert F. Rau II",
 	"authors": ["Rob Rau"],
-	"targetType": "sourceLibrary",
+	"targetType": "library",
 	"buildTypes": {
 		"unittest": {
 			"buildOptions": ["unittests", "debugMode", "debugInfo"]
@@ -12,6 +12,11 @@
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
 			"dflags": ["-mcpu=native"],
 			"dflags-ldc": ["-enable-cross-module-inlining", "-ffast-math", "-linker=gold", "-flto=full"]
+		},
+		"release": {
+			"buildOptions": ["releaseMode", "inline", "optimize"],
+			"dflags": ["-mcpu=native"],
+			"dflags-ldc": ["-enable-cross-module-inlining"]
 		},
 		"unittest-release-avx2": {
 			"buildOptions": ["unittests", "releaseMode", "inline", "debugInfo", "optimize"],
