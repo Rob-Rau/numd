@@ -13,3 +13,4 @@ numd
 numd-test-library*
 comp_mixin.d
 dub.selections.json
+libnumd.a
