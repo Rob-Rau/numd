@@ -1,9 +1,9 @@
-module numd.calculus.integration.rk4;
+module numd.calculus.integration.forwardeuler;
 
 /++
-	Fourth order Runge-Kutta time integration scheme
+	First order forwared euler integrator
 +/
-class RK4(T, sizediff_t static_size = -1)
+class ForwardEuler(T, sizediff_t static_size = -1)
 {
 	static if(static_size == -1) {
 		alias StateArray = T[];
@@ -11,33 +11,17 @@ class RK4(T, sizediff_t static_size = -1)
 		alias StateArray = T[static_size];
 	}
 	
-	private StateArray tmp;
-	private StateArray k;
+	private StateArray x_dot;
 
 	this(size_t data_size) {
 		if(static_size == -1) {
-			tmp = new T[data_size];
-			k = new T[data_size];
+			x_dot = new T[data_size];
 		}
 	}
 
 	@nogc void step(alias func, Args...)(ref StateArray x_next, ref StateArray x, T t, T dt, Args args) {
-		func(k, x, t, dt, args);
-		tmp[] = x[] + 0.5*dt*k[];
-		x_next[] = k[];
-
-		func(k, tmp, t + 0.5*dt, dt, args);
-		tmp[] = x[] + 0.5*dt*k[];
-		x_next[] += 2.0*k[];
-
-		func(k, tmp, t, dt + 0.5*dt, args);
-		tmp[] = x[] + dt*k[];
-		x_next[] += 2.0*k[];
-
-		func(k, tmp, t + dt, dt, args);
-		x_next[] += k[];
-		x_next[] *= (dt/6.0);
-		x_next[] += x[];
+		func(x_dot, x, t, dt, args);
+		x_next[] = x[] + dt*x_dot[];
 	}
 
 	@nogc void integrate(alias func, Args...)(StateArray x, StateArray x_0, T t_end, T dt, auto ref Args args) {
@@ -54,18 +38,11 @@ class RK4(T, sizediff_t static_size = -1)
 
 		auto time = iota(0, t_end, dt);
 
+		x[] = x_0[];
+
 		// Time march, ping-ponging which buffer we use for the output.
 		foreach(idx, t; time.enumerate[0..$-1]) {
-			if(idx % 2 == 0) {
-				step!func(x, x_0, t, dt, args);
-			} else {
-				step!func(x_0, x, t, dt, args);
-				
-				// If this is the last time step, we want the actual result in x not x_0
-				if(idx == time.length - 1) {
-					x[] = x_0[];
-				}
-			}
+			step!func(x, x, t, dt, args);
 		}
 	}
 
