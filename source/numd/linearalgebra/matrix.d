@@ -333,7 +333,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 				static assert(can_multiply!(RHS, ThisType), "Cannot mutliply matrix of type "~RHS.stringof);
 
 				auto res = Matrix!(r, RHS.columns, RHS.T)(0);
-				
+
 				foreach(i; 0..r) {
 					foreach(j; 0..RHS.columns) {
 						foreach(k; 0..RHS.rows) {
@@ -399,6 +399,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		{
 			static assert(ic == r, "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
 			auto res = Matrix!(ir, c, T)(0);
+			
 			for(int i = 0; i < ir; i++) {
 				for(int j = 0; j < c; j++) {
 					for(int k = 0; k < ic; k++) {
@@ -1078,7 +1079,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		{
 			matStr ~= "[";
 			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ mData[i*c + j].format!"%s";
+				matStr ~= " " ~ mData[i*c + j].format!"%+#3.5f";
 			
 			matStr ~= " ]";
 		}
@@ -1147,13 +1148,15 @@ struct Matrix(size_t r, size_t c, _T = double)
 }
 
 // opBinary * (non-square)
-@nogc @safe unittest
+@safe unittest
 {
 	auto m1 = Matrix!(2, 3)(1, 2, 3, 4, 5, 6);
 	auto m2 = Matrix!(3, 2)(5, 6, 7, 8,  9, 10);
 	auto m3 = Matrix!(2, 2)(0);
 	m3 = m1*m2;
 	auto expected = Matrix!(2, 2)(46, 52, 109, 124);
+	writeln(m3);
+	writeln(expected);
 	assert(m3 == expected, "Matrix opBinary * test failed");
 }
 
