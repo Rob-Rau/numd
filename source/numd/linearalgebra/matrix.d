@@ -47,6 +47,11 @@ struct Matrix(size_t r, size_t c, _T = double)
 {
 	alias ThisType = typeof(this);
 	alias T = _T;
+
+	static if(isArray!_T) {
+		alias F = ForeachType!_T;
+	}
+
 @nogc
 {
 	T[r*c] mData;
@@ -339,7 +344,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 						foreach(k; 0..RHS.rows) {
 							static if(isArray!(RHS.T)) {
 								RHS.T tmp = mData[c*i + k]*rhs.mData[k*RHS.columns + j][];
-								RHS.T tmp1 = res.mData[i*ic + j][] + tmp[];
+								RHS.T tmp1 = res.mData[i*RHS.columns + j][] + tmp[];
 								res.mData[i*RHS.columns + j][] = tmp1[];
 							} else {
 								res.mData[i*RHS.columns + j] += mData[c*i + k]*rhs.mData[k*RHS.columns + j];
@@ -424,9 +429,13 @@ struct Matrix(size_t r, size_t c, _T = double)
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx][];");
 				}
-			} static if(isArray!T && !isArray!lhsType) {
+			} else static if(isArray!T && !isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx] "~op~" mData[idx][];");
+				}
+			} else static if(!isArray!T && isArray!lhsType) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx];");
 				}
 			} else {
 				mixin("res.mData[] = lhs.mData[] "~op~" mData[];");
@@ -444,7 +453,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 		static if(op == "*")
 		{
 			static assert(ic == r, "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
-			auto res = Matrix!(ir, c, T)(0);
+			auto res = Matrix!(ir, c, lhsType)(0);
 			for(int i = 0; i < ir; i++) {
 				for(int j = 0; j < c; j++) {
 					for(int k = 0; k < ic; k++) {
@@ -464,14 +473,18 @@ struct Matrix(size_t r, size_t c, _T = double)
 		else static if((op == "+") || (op == "-"))
 		{
 			static assert((ic == c) && (ir == r), "Incompatible matricies. ic == "~ic.to!string~", r == "~r.to!string);
-			auto res = Matrix!(ir, c, T)(0);
+			auto res = Matrix!(ir, c, lhsType)(0);
 			static if(isArray!T && isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx][];");
 				}
-			} static if(isArray!T && !isArray!lhsType) {
+			} else static if(isArray!T && !isArray!lhsType) {
 				foreach(idx; 0..r*c) {
 					mixin("res.mData[idx][] = lhs.mData[idx] "~op~" mData[idx][];");
+				}
+			} else static if(!isArray!T && isArray!lhsType) {
+				foreach(idx; 0..r*c) {
+					mixin("res.mData[idx][] = lhs.mData[idx][] "~op~" mData[idx];");
 				}
 			} else {
 				mixin("res.mData[] = lhs.mData[] "~op~" mData[];");
@@ -775,7 +788,33 @@ struct Matrix(size_t r, size_t c, _T = double)
 	void opOpAssign(string op)(ThisType rhs)
 	{
 		static assert((op == "+") || (op == "-"), "operator not implimented");
-		mixin("mData[] "~op~"= rhs.mData[];");
+		static if(isArray!_T) {
+			foreach(i; 0..r*c) {
+				mixin("mData[i][] "~op~"= rhs.mData[i][];");
+			}
+		} else {
+			mixin("mData[] "~op~"= rhs.mData[];");
+		}
+	}
+
+	static if(isArray!_T) {
+		@trusted @nogc auto opAssign(Matrix!(r, c, F)[] rhs)
+		{
+			static foreach(i; 0..r*c) {
+				foreach(idx, ref vec; rhs) {
+					mData[i][idx] = rhs[idx][i];
+				}
+			}
+			return this;
+		}
+
+		void opOpAssign(string op)(F rhs)
+		{
+			foreach(idx; 0..r*c) {
+				mixin("mData[idx][] "~op~"= rhs;");
+			}
+		}
+
 	}
 
 	ThisType opUnary(string s)() immutable if (s == "-")
@@ -1035,7 +1074,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 			auto res = Vector!(r, T)(0);
 			static if(isArray!T) {
 				immutable T mag = 1/magnitude[];
-				foreach(idx; 0..mag.length) {
+				foreach(idx; 0..r*c) {
 					res.mData[idx][] = mData[idx][]*mag[];
 				}
 			} else {
@@ -1054,7 +1093,7 @@ struct Matrix(size_t r, size_t c, _T = double)
 			auto res = Vector!(r, T)(0);
 			static if(isArray!T) {
 				immutable T mag = 1/magnitude[];
-				foreach(idx; 0..mag.length) {
+				foreach(idx; 0..r*c) {
 					res.mData[idx][] = mData[idx][]*mag[];
 				}
 			} else {
@@ -1079,7 +1118,12 @@ struct Matrix(size_t r, size_t c, _T = double)
 		{
 			matStr ~= "[";
 			for(int j = 0; j < c; j++)
-				matStr ~= " " ~ mData[i*c + j].format!"%+#3.5f";
+				static if(isStaticArray!T) {
+					matStr ~= " " ~ mData[i*c + j][0].format!"%+#3.5f";
+				} else {
+					matStr ~= " " ~ mData[i*c + j].format!"%+#3.5f";
+				}
+				
 			
 			matStr ~= " ]";
 		}
